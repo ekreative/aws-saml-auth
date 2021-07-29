@@ -9,7 +9,6 @@ from aws_saml_auth import configuration
 
 
 class TestConfigurationPersistence(unittest.TestCase):
-
     def setUp(self):
         self.c = configuration.Configuration()
 
@@ -33,17 +32,28 @@ class TestConfigurationPersistence(unittest.TestCase):
     def tearDown(self):
         section_name = configuration.Configuration.config_profile(self.c.profile)
         self.config_parser.remove_section(section_name)
-        with open(self.c.config_file, 'w') as config_file:
+        with open(self.c.config_file, "w") as config_file:
             self.config_parser.write(config_file)
 
     def test_creating_new_profile(self):
         profile_string = configuration.Configuration.config_profile(self.c.profile)
         self.assertTrue(self.config_parser.has_section(profile_string))
-        self.assertEqual(self.config_parser[profile_string].get('asa.role_arn'), self.c.role_arn)
-        self.assertEqual(self.config_parser[profile_string].get('asa.login_url'), self.c.login_url)
-        self.assertEqual(self.config_parser[profile_string].get('region'), self.c.region)
-        self.assertEqual(self.config_parser[profile_string].getboolean('asa.ask_role'), self.c.ask_role)
-        self.assertEqual(self.config_parser[profile_string].getint('asa.duration'), self.c.duration)
+        self.assertEqual(
+            self.config_parser[profile_string].get("asa.role_arn"), self.c.role_arn
+        )
+        self.assertEqual(
+            self.config_parser[profile_string].get("asa.login_url"), self.c.login_url
+        )
+        self.assertEqual(
+            self.config_parser[profile_string].get("region"), self.c.region
+        )
+        self.assertEqual(
+            self.config_parser[profile_string].getboolean("asa.ask_role"),
+            self.c.ask_role,
+        )
+        self.assertEqual(
+            self.config_parser[profile_string].getint("asa.duration"), self.c.duration
+        )
 
     def test_can_read_all_values(self):
         test_configuration = configuration.Configuration()

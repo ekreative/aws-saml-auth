@@ -24,43 +24,111 @@ def parse_args(args):
     )
 
     main_group = parser.add_mutually_exclusive_group()
-    main_group.add_argument('--redirect-server', action='store_true', help='Run the redirect server on port ($PORT)')
-    main_group.add_argument('-L', '--login-url', help='SAML Provider login url ($ASA_LOGIN_URL)')
-    parser.add_argument('-R', '--region', help='AWS region endpoint ($AWS_DEFAULT_REGION)')
+    main_group.add_argument(
+        "--redirect-server",
+        action="store_true",
+        help="Run the redirect server on port ($PORT)",
+    )
+    main_group.add_argument(
+        "-L", "--login-url", help="SAML Provider login url ($ASA_LOGIN_URL)"
+    )
+    parser.add_argument(
+        "-R", "--region", help="AWS region endpoint ($AWS_DEFAULT_REGION)"
+    )
     duration_group = parser.add_mutually_exclusive_group()
-    duration_group.add_argument('-d', '--duration', type=int, help='Credential duration in seconds (defaults to value of $ASA_DURATION, then falls back to 43200)')
-    duration_group.add_argument('--auto-duration', action='store_true', help='Tries to use the longest allowed duration ($ASA_AUTO_DURATION=1)')
-    parser.add_argument('-p', '--profile', help='AWS profile (defaults to value of $AWS_PROFILE, then falls back to \'sts\')')
-    parser.add_argument('-A', '--account', help='Filter for specific AWS account ($ASA_AWS_ACCOUNT)')
-    parser.add_argument('-q', '--quiet', action='store_true', help='Quiet output')
-    parser.add_argument('--saml-assertion', dest="saml_assertion", help='Base64 encoded SAML assertion to use')
-    parser.add_argument('--no-saml-cache', dest="saml_cache", action='store_false', help='Do not cache the SAML Assertion')
+    duration_group.add_argument(
+        "-d",
+        "--duration",
+        type=int,
+        help="Credential duration in seconds (defaults to value of $ASA_DURATION, then falls back to 43200)",
+    )
+    duration_group.add_argument(
+        "--auto-duration",
+        action="store_true",
+        help="Tries to use the longest allowed duration ($ASA_AUTO_DURATION=1)",
+    )
+    parser.add_argument(
+        "-p",
+        "--profile",
+        help="AWS profile (defaults to value of $AWS_PROFILE, then falls back to 'sts')",
+    )
+    parser.add_argument(
+        "-A", "--account", help="Filter for specific AWS account ($ASA_AWS_ACCOUNT)"
+    )
+    parser.add_argument("-q", "--quiet", action="store_true", help="Quiet output")
+    parser.add_argument(
+        "--saml-assertion",
+        dest="saml_assertion",
+        help="Base64 encoded SAML assertion to use",
+    )
+    parser.add_argument(
+        "--no-saml-cache",
+        dest="saml_cache",
+        action="store_false",
+        help="Do not cache the SAML Assertion",
+    )
     print_group = parser.add_mutually_exclusive_group()
-    print_group.add_argument('--print-creds', action='store_true', help='Print Credentials')
-    print_group.add_argument('--credential-process', action='store_true',help='Output suitable for aws cli credential_process ($ASA_CREDENTIAL_PROCESS=1)')
-    parser.add_argument('--no-resolve-aliases', dest="resolve_aliases", action='store_false', help='Do not resolve AWS account aliases. ($ASA_NO_RESOLVE_ALIASES=1)')
-    parser.add_argument('--port', type=int, help='Port for the redirect server ($PORT)')
+    print_group.add_argument(
+        "--print-creds", action="store_true", help="Print Credentials"
+    )
+    print_group.add_argument(
+        "--credential-process",
+        action="store_true",
+        help="Output suitable for aws cli credential_process ($ASA_CREDENTIAL_PROCESS=1)",
+    )
+    parser.add_argument(
+        "--no-resolve-aliases",
+        dest="resolve_aliases",
+        action="store_false",
+        help="Do not resolve AWS account aliases. ($ASA_NO_RESOLVE_ALIASES=1)",
+    )
+    parser.add_argument("--port", type=int, help="Port for the redirect server ($PORT)")
 
     role_group = parser.add_mutually_exclusive_group()
-    role_group.add_argument('-a', '--ask-role', action='store_true', help='Set true to always pick the role ($ASA_ASK_ROLE=1)')
-    role_group.add_argument('-r', '--role-arn', help='The ARN of the role to assume ($ASA_ROLE_ARN)')
-    parser.add_argument('-l', '--log', dest='log_level', choices=['debug', 'info', 'warn'], default='warn', help='Select log level (default: %(default)s)')
-    parser.add_argument('-V', '--version', action='version', version='%(prog)s {version}'.format(version=_version.__version__))
+    role_group.add_argument(
+        "-a",
+        "--ask-role",
+        action="store_true",
+        help="Set true to always pick the role ($ASA_ASK_ROLE=1)",
+    )
+    role_group.add_argument(
+        "-r", "--role-arn", help="The ARN of the role to assume ($ASA_ROLE_ARN)"
+    )
+    parser.add_argument(
+        "-l",
+        "--log",
+        dest="log_level",
+        choices=["debug", "info", "warn"],
+        default="warn",
+        help="Select log level (default: %(default)s)",
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version="%(prog)s {version}".format(version=_version.__version__),
+    )
 
     return parser.parse_args(args)
 
 
 def exit_if_unsupported_python():
     if sys.version_info.major == 2 and sys.version_info.minor < 7:
-        logging.critical("%s requires Python 2.7 or higher. Please consider "
-                         "upgrading. Support for Python 2.6 and lower was "
-                         "dropped because this tool's dependencies dropped "
-                         "support.", __name__)
-        logging.critical("For debugging, it appears you're running: %s",
-                         sys.version_info)
-        logging.critical("For more information, see: "
-                         "https://github.com/cevoaustralia/aws-google-auth/"
-                         "issues/41")
+        logging.critical(
+            "%s requires Python 2.7 or higher. Please consider "
+            "upgrading. Support for Python 2.6 and lower was "
+            "dropped because this tool's dependencies dropped "
+            "support.",
+            __name__,
+        )
+        logging.critical(
+            "For debugging, it appears you're running: %s", sys.version_info
+        )
+        logging.critical(
+            "For more information, see: "
+            "https://github.com/cevoaustralia/aws-google-auth/"
+            "issues/41"
+        )
         sys.exit(1)
 
 
@@ -76,6 +144,7 @@ def cli(cli_args):
         config = resolve_config(args)
         if args.redirect_server:
             from aws_saml_auth.redirect_server import start_redirect_server
+
             start_redirect_server(config.port)
             return
 
@@ -102,71 +171,61 @@ def resolve_config(args):
 
     # Have the configuration update itself via the ~/.aws/config on disk.
     # Profile (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.profile = coalesce(
-        args.profile,
-        os.getenv('AWS_PROFILE'),
-        config.profile)
+    config.profile = coalesce(args.profile, os.getenv("AWS_PROFILE"), config.profile)
 
     # Now that we've established the profile, we can read the configuration and
     # fill in all the other variables.
     config.read(config.profile)
 
     # Ask Role (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.ask_role = args.ask_role or os.getenv('ASA_ASK_ROLE') != None or config.ask_role != None
+    config.ask_role = (
+        args.ask_role or os.getenv("ASA_ASK_ROLE") != None or config.ask_role != None
+    )
 
     # Duration (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.duration = int(coalesce(
-        args.duration,
-        os.getenv('ASA_DURATION'),
-        config.duration))
+    config.duration = int(
+        coalesce(args.duration, os.getenv("ASA_DURATION"), config.duration)
+    )
 
     # Automatic duration (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.auto_duration = args.auto_duration or os.getenv('ASA_AUTO_DURATION') != None
+    config.auto_duration = args.auto_duration or os.getenv("ASA_AUTO_DURATION") != None
 
     # Login URL (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.login_url = coalesce(
-        args.login_url,
-        os.getenv('ASA_LOGIN_URL'),
-        config.login_url)
+        args.login_url, os.getenv("ASA_LOGIN_URL"), config.login_url
+    )
 
     # Region (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.region = coalesce(
-        args.region,
-        os.getenv('ASA_AWS_DEFAULT_REGION'),
-        config.region)
+        args.region, os.getenv("ASA_AWS_DEFAULT_REGION"), config.region
+    )
 
     # ROLE ARN (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.role_arn = coalesce(
-        args.role_arn,
-        os.getenv('ASA_ROLE_ARN'),
-        config.role_arn)
+        args.role_arn, os.getenv("ASA_ROLE_ARN"), config.role_arn
+    )
 
     # Resolve AWS aliases enabled (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.resolve_aliases = coalesce(
-        args.resolve_aliases,
-        config.resolve_aliases) or os.getenv('ASA_NO_RESOLVE_ALIASES') != None
+    config.resolve_aliases = (
+        coalesce(args.resolve_aliases, config.resolve_aliases)
+        or os.getenv("ASA_NO_RESOLVE_ALIASES") != None
+    )
 
     # Account (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.account = coalesce(
-        args.account,
-        os.getenv('ASA_AWS_ACCOUNT'),
-        config.account)
+        args.account, os.getenv("ASA_AWS_ACCOUNT"), config.account
+    )
 
-    config.print_creds = coalesce(
-        args.print_creds,
-        config.print_creds)
+    config.print_creds = coalesce(args.print_creds, config.print_creds)
 
     # Quiet
-    config.quiet = coalesce(
-        args.quiet,
-        config.quiet)
+    config.quiet = coalesce(args.quiet, config.quiet)
 
-    config.port = int(coalesce(
-        args.port,
-        os.getenv('PORT'),
-        config.port))
+    config.port = int(coalesce(args.port, os.getenv("PORT"), config.port))
 
-    config.credential_process = args.credential_process or os.getenv('ASA_CREDENTIAL_PROCESS') != None
+    config.credential_process = (
+        args.credential_process or os.getenv("ASA_CREDENTIAL_PROCESS") != None
+    )
     if config.credential_process:
         config.quiet = True
         config.ask_role = False
@@ -180,11 +239,11 @@ def resolve_config(args):
 def process_auth(args, config):
     if config.region is None:
         config.region = util.Util.get_input("AWS Region: ")
-        logging.debug('%s: region is: %s', __name__, config.region)
+        logging.debug("%s: region is: %s", __name__, config.region)
 
     if config.login_url is None:
         config.login_url = util.Util.get_input("Login URL: ")
-        logging.debug('%s: login url is: %s', __name__, config.login_url)
+        logging.debug("%s: login url is: %s", __name__, config.login_url)
 
     # If there is a valid cache and the user opted to use it, use that instead
     # of prompting the user for input (it will also ignroe any set variables
@@ -197,7 +256,7 @@ def process_auth(args, config):
         saml_xml = None
     elif args.saml_cache and config.saml_cache:
         saml_xml = config.saml_cache
-        logging.info('%s: SAML cache found', __name__)
+        logging.info("%s: SAML cache found", __name__)
     else:
         saml_client = saml.Saml(config)
         saml_xml = saml_client.do_browser_saml()
@@ -220,9 +279,13 @@ def process_auth(args, config):
         else:
             if config.account and config.resolve_aliases:
                 aliases = amazon_client.resolve_aws_aliases(roles)
-                config.role_arn, config.provider = util.Util.pick_a_role(roles, aliases, config.account)
+                config.role_arn, config.provider = util.Util.pick_a_role(
+                    roles, aliases, config.account
+                )
             elif config.account:
-                config.role_arn, config.provider = util.Util.pick_a_role(roles, account=config.account)
+                config.role_arn, config.provider = util.Util.pick_a_role(
+                    roles, account=config.account
+                )
             elif config.resolve_aliases:
                 aliases = amazon_client.resolve_aws_aliases(roles)
                 config.role_arn, config.provider = util.Util.pick_a_role(roles, aliases)
@@ -230,7 +293,10 @@ def process_auth(args, config):
                 config.role_arn, config.provider = util.Util.pick_a_role(roles)
         if not config.quiet:
             print("Assuming " + config.role_arn)
-            print("Credentials Expiration: " + format(amazon_client.expiration.astimezone(get_localzone())))
+            print(
+                "Credentials Expiration: "
+                + format(amazon_client.expiration.astimezone(get_localzone()))
+            )
 
     if config.credential_process:
         amazon_client.print_credential_process()
@@ -242,10 +308,11 @@ def process_auth(args, config):
 
     config.write_saml_cache()
 
+
 def main():
     cli_args = sys.argv[1:]
     cli(cli_args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

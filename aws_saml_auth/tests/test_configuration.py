@@ -6,13 +6,22 @@ from aws_saml_auth import configuration
 
 
 class TestConfigurationMethods(unittest.TestCase):
-
     def test_config_profile(self):
-        self.assertEqual(configuration.Configuration.config_profile('default'), 'default')
-        self.assertEqual(configuration.Configuration.config_profile('DEFAULT'), 'DEFAULT')
-        self.assertEqual(configuration.Configuration.config_profile('testing'), 'profile testing')
-        self.assertEqual(configuration.Configuration.config_profile(None), 'profile None')
-        self.assertEqual(configuration.Configuration.config_profile(123456), 'profile 123456')
+        self.assertEqual(
+            configuration.Configuration.config_profile("default"), "default"
+        )
+        self.assertEqual(
+            configuration.Configuration.config_profile("DEFAULT"), "DEFAULT"
+        )
+        self.assertEqual(
+            configuration.Configuration.config_profile("testing"), "profile testing"
+        )
+        self.assertEqual(
+            configuration.Configuration.config_profile(None), "profile None"
+        )
+        self.assertEqual(
+            configuration.Configuration.config_profile(123456), "profile 123456"
+        )
 
     def test_duration_invalid_values(self):
         # Duration must be an integer
@@ -32,7 +41,9 @@ class TestConfigurationMethods(unittest.TestCase):
         c.duration = -1
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
-        self.assertIn("Expected duration to be greater than or equal to 900.", str(e.exception))
+        self.assertIn(
+            "Expected duration to be greater than or equal to 900.", str(e.exception)
+        )
 
         # Duration can not be greater than MAX_DURATION
         valid = configuration.Configuration()
@@ -41,10 +52,13 @@ class TestConfigurationMethods(unittest.TestCase):
         c = configuration.Configuration()
         c.region = "sample_region"
         c.login_url = "sample_login_url"
-        c.duration = (valid.max_duration + 1)
+        c.duration = valid.max_duration + 1
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
-        self.assertIn("Expected duration to be less than or equal to max_duration", str(e.exception))
+        self.assertIn(
+            "Expected duration to be less than or equal to max_duration",
+            str(e.exception),
+        )
 
     def test_duration_valid_values(self):
         c = configuration.Configuration()
@@ -56,7 +70,7 @@ class TestConfigurationMethods(unittest.TestCase):
         c.duration = c.max_duration
         self.assertEqual(c.duration, c.max_duration)
         c.raise_if_invalid()
-        c.duration = (c.max_duration - 1)
+        c.duration = c.max_duration - 1
         self.assertEqual(c.duration, c.max_duration - 1)
         c.raise_if_invalid()
 
@@ -104,7 +118,9 @@ class TestConfigurationMethods(unittest.TestCase):
         c.region = "sample_region"
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
-        self.assertIn("Expected login_url to be set to non-None value.", str(e.exception))
+        self.assertIn(
+            "Expected login_url to be set to non-None value.", str(e.exception)
+        )
 
     def test_profile_defaults_to_sts(self):
         c = configuration.Configuration()
@@ -138,7 +154,7 @@ class TestConfigurationMethods(unittest.TestCase):
         c = configuration.Configuration()
         c.region = "sample_region"
         c.login_url = "sample_login_url"
-        self.assertEqual(c.profile, 'sts')
+        self.assertEqual(c.profile, "sts")
         c.raise_if_invalid()
 
     def test_region_invalid_values(self):

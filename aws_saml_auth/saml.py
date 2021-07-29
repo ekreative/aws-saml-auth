@@ -13,6 +13,7 @@ class ExpectedSamlException(Exception):
     def __init__(self, *args):
         super(ExpectedSamlException, self).__init__(*args)
 
+
 class Saml:
     def __init__(self, config):
         """The Saml object opens the browser and catches the redirected response
@@ -25,7 +26,7 @@ class Saml:
         self.config = config
 
     def do_browser_saml(self):
-        logging.warning('Opening url %s', self.login_url)
+        logging.warning("Opening url %s", self.login_url)
         webbrowser.open(self.login_url)
         saml_text = self._catch_saml()
 
@@ -33,12 +34,14 @@ class Saml:
 
     @staticmethod
     def _catch_saml(port=4589):
-        server_address = ('', port)
+        server_address = ("", port)
         httpd = LoginServer(server_address, LoginServerHandler)
-        logging.info('Starting http handler...\n')
+        logging.info("Starting http handler...\n")
         httpd.handle_request()
 
-        assert ("SAMLResponse" in httpd.post_data), "Expected post data to contain SAMLResponse."
+        assert (
+            "SAMLResponse" in httpd.post_data
+        ), "Expected post data to contain SAMLResponse."
         return httpd.post_data["SAMLResponse"][0]
 
     @property
@@ -46,4 +49,4 @@ class Saml:
         if self.config.login_url is not None:
             return self.config.login_url
 
-        raise ExpectedSamlException('No saml login url provided')
+        raise ExpectedSamlException("No saml login url provided")

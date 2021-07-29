@@ -14,7 +14,6 @@ from tabulate import tabulate
 
 
 class Util:
-
     @staticmethod
     def get_input(prompt):
         return input(prompt)
@@ -22,7 +21,11 @@ class Util:
     @staticmethod
     def pick_a_role(roles, aliases=None, account=None):
         if account:
-            filtered_roles = {role: principal for role, principal in roles.items() if(account in role)}
+            filtered_roles = {
+                role: principal
+                for role, principal in roles.items()
+                if (account in role)
+            }
         else:
             filtered_roles = roles
 
@@ -30,11 +33,13 @@ class Util:
             enriched_roles = {}
             for role, principal in filtered_roles.items():
                 enriched_roles[role] = [
-                    aliases[role.split(':')[4]],
-                    role.split('role/')[1],
-                    principal
+                    aliases[role.split(":")[4]],
+                    role.split("role/")[1],
+                    principal,
                 ]
-            enriched_roles = OrderedDict(sorted(enriched_roles.items(), key=lambda t: (t[1][0], t[1][1])))
+            enriched_roles = OrderedDict(
+                sorted(enriched_roles.items(), key=lambda t: (t[1][0], t[1][1]))
+            )
 
             ordered_roles = OrderedDict()
             for role, role_property in enriched_roles.items():
@@ -45,8 +50,15 @@ class Util:
                 enriched_roles_tab.append([i + 1, role_property[0], role_property[1]])
 
             while True:
-                print(tabulate(enriched_roles_tab, headers=['No', 'AWS account', 'Role'], ))
-                prompt = 'Type the number (1 - {:d}) of the role to assume: '.format(len(enriched_roles))
+                print(
+                    tabulate(
+                        enriched_roles_tab,
+                        headers=["No", "AWS account", "Role"],
+                    )
+                )
+                prompt = "Type the number (1 - {:d}) of the role to assume: ".format(
+                    len(enriched_roles)
+                )
                 choice = Util.get_input(prompt)
 
                 try:
@@ -58,7 +70,9 @@ class Util:
                 for i, role in enumerate(filtered_roles):
                     print("[{:>3d}] {}".format(i + 1, role))
 
-                prompt = 'Type the number (1 - {:d}) of the role to assume: '.format(len(filtered_roles))
+                prompt = "Type the number (1 - {:d}) of the role to assume: ".format(
+                    len(filtered_roles)
+                )
                 choice = Util.get_input(prompt)
 
                 try:
@@ -88,20 +102,22 @@ class Util:
     @staticmethod
     def unicode_to_string_if_needed(object):
         if "unicode" in str(object.__class__):
-            return object.encode('utf-8')
+            return object.encode("utf-8")
         else:
             return object
 
     @staticmethod
     def parse_post(handler):
-        if 'content-type' not in handler.headers:
+        if "content-type" not in handler.headers:
             return {}
-        ctype, pdict = parse_header(handler.headers['content-type'])
-        if ctype == 'multipart/form-data':
+        ctype, pdict = parse_header(handler.headers["content-type"])
+        if ctype == "multipart/form-data":
             postvars = parse_multipart(handler.rfile, pdict)
-        elif ctype == 'application/x-www-form-urlencoded':
-            length = int(handler.headers['content-length'])
-            postvars = parse_qs(handler.rfile.read(length).decode('utf-8'), keep_blank_values=1)
+        elif ctype == "application/x-www-form-urlencoded":
+            length = int(handler.headers["content-length"])
+            postvars = parse_qs(
+                handler.rfile.read(length).decode("utf-8"), keep_blank_values=1
+            )
         else:
             postvars = {}
         return postvars

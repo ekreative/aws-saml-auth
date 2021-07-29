@@ -6,7 +6,6 @@ from aws_saml_auth import parse_args
 
 
 class TestPythonFailOnVersion(unittest.TestCase):
-
     def test_no_arguments(self):
         """
         This test case exists to validate the default settings of the args parser.
@@ -39,20 +38,20 @@ class TestPythonFailOnVersion(unittest.TestCase):
 
     def test_nocache(self):
 
-        parser = parse_args(['--no-saml-cache'])
+        parser = parse_args(["--no-saml-cache"])
 
         self.assertFalse(parser.saml_cache)
 
     def test_resolvealiases(self):
 
-        parser = parse_args(['--no-resolve-aliases'])
+        parser = parse_args(["--no-resolve-aliases"])
 
         self.assertFalse(parser.resolve_aliases)
 
     def test_ask_and_supply_role(self):
 
         with self.assertRaises(SystemExit):
-            parse_args(['-a', '-r', 'da-role'])
+            parse_args(["-a", "-r", "da-role"])
 
     def test_invalid_duration(self):
         """
@@ -61,4 +60,4 @@ class TestPythonFailOnVersion(unittest.TestCase):
         """
 
         with self.assertRaises(SystemExit):
-            parse_args(['-d', 'abce'])
+            parse_args(["-d", "abce"])
