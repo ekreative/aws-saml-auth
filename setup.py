@@ -18,11 +18,11 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 version = {}
-with open(path.join(here, 'aws_google_auth/_version.py')) as fp:
+with open(path.join(here, 'aws_saml_auth/_version.py')) as fp:
     exec(fp.read(), version)
 
 setup(
-    name='aws-google-auth',
+    name='aws-saml-auth',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -34,9 +34,9 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/cevoaustralia/aws-google-auth',
+    url='https://github.com/ekreative/aws-saml-auth',
 
-    download_url='https://github.com/cevoaustralia/aws-google-auth/archive/%s.tar.gz' % version['__version__'],
+    download_url='https://github.com/ekreative/aws-saml-auth/archive/%s.tar.gz' % version['__version__'],
 
     # Author details
     author='Colin Panisset',
@@ -120,7 +120,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'aws-google-auth=aws_google_auth:main',
+            'aws-saml-auth=aws_saml_auth:main',
         ],
     },
 

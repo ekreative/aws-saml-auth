@@ -13,8 +13,8 @@ try:
 except ImportError:
     import configparser
 
-from aws_google_auth import util
-from aws_google_auth import amazon
+from aws_saml_auth import util
+from aws_saml_auth import amazon
 
 
 class Configuration(object):

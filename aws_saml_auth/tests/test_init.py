@@ -3,7 +3,7 @@ from argparse import Namespace
 
 from mock import call, patch, Mock, MagicMock
 
-import aws_google_auth
+import aws_saml_auth
 
 
 class TestInit(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestInit(unittest.TestCase):
     def setUp(self):
         pass
 
-    @patch('aws_google_auth.cli', spec=True)
+    @patch('aws_saml_auth.cli', spec=True)
     def test_main_method_has_no_parameters(self, mock_cli):
         """
         This is the entrypoint for the cli tool, and should require no parameters
@@ -21,22 +21,22 @@ class TestInit(unittest.TestCase):
         """
 
         # Function under test
-        aws_google_auth.main()
+        aws_saml_auth.main()
 
         self.assertTrue(mock_cli.called)
 
-    @patch('aws_google_auth.exit_if_unsupported_python', spec=True)
-    @patch('aws_google_auth.resolve_config', spec=True)
-    @patch('aws_google_auth.process_auth', spec=True)
+    @patch('aws_saml_auth.exit_if_unsupported_python', spec=True)
+    @patch('aws_saml_auth.resolve_config', spec=True)
+    @patch('aws_saml_auth.process_auth', spec=True)
     def test_main_method_chaining(self, process_auth, resolve_config, exit_if_unsupported_python):
 
         # Create a mock config to be returned from the resolve_config function
         mock_config = Mock()
         # Inject the mock as the return value from the function
-        aws_google_auth.resolve_config.return_value = mock_config
+        aws_saml_auth.resolve_config.return_value = mock_config
 
         # Function under test
-        aws_google_auth.cli([])
+        aws_saml_auth.cli([])
 
         self.assertTrue(exit_if_unsupported_python.called)
         self.assertTrue(resolve_config.called)
@@ -93,9 +93,9 @@ class TestInit(unittest.TestCase):
                           ],
                          process_auth.mock_calls)
 
-    @patch('aws_google_auth.util', spec=True)
-    @patch('aws_google_auth.amazon', spec=True)
-    @patch('aws_google_auth.google', spec=True)
+    @patch('aws_saml_auth.util', spec=True)
+    @patch('aws_saml_auth.amazon', spec=True)
+    @patch('aws_saml_auth.google', spec=True)
     def test_process_auth_standard(self, mock_google, mock_amazon, mock_util):
 
         mock_config = Mock()
@@ -129,10 +129,10 @@ class TestInit(unittest.TestCase):
         mock_amazon.Amazon = MagicMock(return_value=mock_amazon_client)
         mock_google.Google = MagicMock(return_value=mock_google_client)
 
-        args = aws_google_auth.parse_args([])
+        args = aws_saml_auth.parse_args([])
 
         # Method Under Test
-        aws_google_auth.process_auth(args, mock_config)
+        aws_saml_auth.process_auth(args, mock_config)
 
         # Assert values collected
         self.assertEqual(mock_config.region, "region_input")
@@ -168,9 +168,9 @@ class TestInit(unittest.TestCase):
                                 'arn:aws:iam::123456789012:role/admin': 'arn:aws:iam::123456789012:saml-provider/GoogleApps'}, [])
                           ], mock_util_obj.pick_a_role.mock_calls)
 
-    @patch('aws_google_auth.util', spec=True)
-    @patch('aws_google_auth.amazon', spec=True)
-    @patch('aws_google_auth.google', spec=True)
+    @patch('aws_saml_auth.util', spec=True)
+    @patch('aws_saml_auth.amazon', spec=True)
+    @patch('aws_saml_auth.google', spec=True)
     def test_process_auth_print_creds(self, mock_google, mock_amazon, mock_util):
         mock_config = Mock()
         mock_config.profile = False
@@ -204,10 +204,10 @@ class TestInit(unittest.TestCase):
         mock_amazon.Amazon = MagicMock(return_value=mock_amazon_client)
         mock_google.Google = MagicMock(return_value=mock_google_client)
 
-        args = aws_google_auth.parse_args([])
+        args = aws_saml_auth.parse_args([])
 
         # Method Under Test
-        aws_google_auth.process_auth(args, mock_config)
+        aws_saml_auth.process_auth(args, mock_config)
 
         # Assert values collected
         self.assertEqual(mock_config.username, "input")
@@ -247,9 +247,9 @@ class TestInit(unittest.TestCase):
         self.assertEqual([call()],
                          mock_amazon_client.print_export_line.mock_calls)
 
-    @patch('aws_google_auth.util', spec=True)
-    @patch('aws_google_auth.amazon', spec=True)
-    @patch('aws_google_auth.google', spec=True)
+    @patch('aws_saml_auth.util', spec=True)
+    @patch('aws_saml_auth.amazon', spec=True)
+    @patch('aws_saml_auth.google', spec=True)
     def test_process_auth_specified_role(self, mock_google, mock_amazon, mock_util):
 
         mock_config = Mock()
@@ -283,10 +283,10 @@ class TestInit(unittest.TestCase):
         mock_amazon.Amazon = MagicMock(return_value=mock_amazon_client)
         mock_google.Google = MagicMock(return_value=mock_google_client)
 
-        args = aws_google_auth.parse_args([])
+        args = aws_saml_auth.parse_args([])
 
         # Method Under Test
-        aws_google_auth.process_auth(args, mock_config)
+        aws_saml_auth.process_auth(args, mock_config)
 
         # Assert values collected
         self.assertEqual(mock_config.username, "input")
@@ -316,9 +316,9 @@ class TestInit(unittest.TestCase):
         self.assertEqual([],
                          mock_util_obj.pick_a_role.mock_calls)
 
-    @patch('aws_google_auth.util', spec=True)
-    @patch('aws_google_auth.amazon', spec=True)
-    @patch('aws_google_auth.google', spec=True)
+    @patch('aws_saml_auth.util', spec=True)
+    @patch('aws_saml_auth.amazon', spec=True)
+    @patch('aws_saml_auth.google', spec=True)
     def test_process_auth_dont_resolve_alias(self, mock_google, mock_amazon, mock_util):
 
         mock_config = Mock()
@@ -351,10 +351,10 @@ class TestInit(unittest.TestCase):
         mock_amazon.Amazon = MagicMock(return_value=mock_amazon_client)
         mock_google.Google = MagicMock(return_value=mock_google_client)
 
-        args = aws_google_auth.parse_args([])
+        args = aws_saml_auth.parse_args([])
 
         # Method Under Test
-        aws_google_auth.process_auth(args, mock_config)
+        aws_saml_auth.process_auth(args, mock_config)
 
         # Assert values collected
         self.assertEqual(mock_config.username, "input")
@@ -388,9 +388,9 @@ class TestInit(unittest.TestCase):
                                 'arn:aws:iam::123456789012:role/admin': 'arn:aws:iam::123456789012:saml-provider/GoogleApps'})
                           ], mock_util_obj.pick_a_role.mock_calls)
 
-    @patch('aws_google_auth.util', spec=True)
-    @patch('aws_google_auth.amazon', spec=True)
-    @patch('aws_google_auth.google', spec=True)
+    @patch('aws_saml_auth.util', spec=True)
+    @patch('aws_saml_auth.amazon', spec=True)
+    @patch('aws_saml_auth.google', spec=True)
     def test_process_auth_with_profile(self, mock_google, mock_amazon, mock_util):
 
         mock_config = Mock()
@@ -424,10 +424,10 @@ class TestInit(unittest.TestCase):
         mock_amazon.Amazon = MagicMock(return_value=mock_amazon_client)
         mock_google.Google = MagicMock(return_value=mock_google_client)
 
-        args = aws_google_auth.parse_args([])
+        args = aws_saml_auth.parse_args([])
 
         # Method Under Test
-        aws_google_auth.process_auth(args, mock_config)
+        aws_saml_auth.process_auth(args, mock_config)
 
         # Assert values collected
         self.assertEqual(mock_config.username, "input")
@@ -462,9 +462,9 @@ class TestInit(unittest.TestCase):
                                 'arn:aws:iam::123456789012:role/admin': 'arn:aws:iam::123456789012:saml-provider/GoogleApps'}, [])
                           ], mock_util_obj.pick_a_role.mock_calls)
 
-    @patch('aws_google_auth.util', spec=True)
-    @patch('aws_google_auth.amazon', spec=True)
-    @patch('aws_google_auth.google', spec=True)
+    @patch('aws_saml_auth.util', spec=True)
+    @patch('aws_saml_auth.amazon', spec=True)
+    @patch('aws_saml_auth.google', spec=True)
     def test_process_auth_with_saml_cache(self, mock_google, mock_amazon, mock_util):
 
         mock_config = Mock()
@@ -497,10 +497,10 @@ class TestInit(unittest.TestCase):
         mock_amazon.Amazon = MagicMock(return_value=mock_amazon_client)
         mock_google.Google = MagicMock(return_value=mock_google_client)
 
-        args = aws_google_auth.parse_args([])
+        args = aws_saml_auth.parse_args([])
 
         # Method Under Test
-        aws_google_auth.process_auth(args, mock_config)
+        aws_saml_auth.process_auth(args, mock_config)
 
         # Assert values collected
         self.assertEqual(mock_config.username, None)

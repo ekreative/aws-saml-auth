@@ -20,12 +20,12 @@ from requests import HTTPError
 from six import print_ as print
 from six.moves import urllib_parse, input
 
-from aws_google_auth import _version
-from aws_google_auth.login_server import LoginServerHandler, LoginServer
+from aws_saml_auth import _version
+from aws_saml_auth.login_server import LoginServerHandler, LoginServer
 
 # The U2F USB Library is optional, if it's there, include it.
 try:
-    from aws_google_auth import u2f
+    from aws_saml_auth import u2f
 except ImportError:
     logging.info("Failed to import U2F libraries, U2F login unavailable. "
                  "Other methods can still continue.")
@@ -58,7 +58,7 @@ class Google:
         self.save_flow = save_flow
         if save_flow:
             self.save_flow_dict = {}
-            self.save_flow_dir = "aws-google-auth-" + datetime.now().strftime('%Y-%m-%dT%H%M%S')
+            self.save_flow_dir = "aws-saml-auth-" + datetime.now().strftime('%Y-%m-%dT%H%M%S')
             os.makedirs(self.save_flow_dir, exist_ok=True)
 
     def do_browser_saml(self):
@@ -225,7 +225,7 @@ class Google:
 
     def do_login(self):
         self.session = requests.Session()
-        self.session.headers['User-Agent'] = "AWS Sign-in/{} (aws-google-auth)".format(self.version)
+        self.session.headers['User-Agent'] = "AWS Sign-in/{} (aws-saml-auth)".format(self.version)
         sess = self.get(self.login_url)
 
         # Collect information from the page source

@@ -11,16 +11,16 @@ import keyring
 from six import print_ as print
 from tzlocal import get_localzone
 
-from aws_google_auth import _version
-from aws_google_auth import amazon
-from aws_google_auth import configuration
-from aws_google_auth import google
-from aws_google_auth import util
+from aws_saml_auth import _version
+from aws_saml_auth import amazon
+from aws_saml_auth import configuration
+from aws_saml_auth import google
+from aws_saml_auth import util
 
 
 def parse_args(args):
     parser = argparse.ArgumentParser(
-        prog="aws-google-auth",
+        prog="aws-saml-auth",
         description="Acquire temporary AWS credentials via Google SSO",
     )
 
@@ -207,7 +207,7 @@ def resolve_config(args):
 
 def process_auth(args, config):
     if args.redirect_server:
-        from aws_google_auth.redirect_server import start_redirect_server
+        from aws_saml_auth.redirect_server import start_redirect_server
         start_redirect_server(config.port)
         return
 
@@ -247,7 +247,7 @@ def process_auth(args, config):
         # line nor environment variables. This prevents password leakage.
         keyring_password = None
         if config.keyring:
-            keyring_password = keyring.get_password("aws-google-auth", config.username)
+            keyring_password = keyring.get_password("aws-saml-auth", config.username)
             if keyring_password:
                 config.password = keyring_password
             else:
@@ -266,7 +266,7 @@ def process_auth(args, config):
         # If we logged in correctly and we are using keyring then store the password
         if config.keyring and keyring_password is None:
             keyring.set_password(
-                "aws-google-auth", config.username, config.password)
+                "aws-saml-auth", config.username, config.password)
 
     # We now have a new SAML value that can get cached (If the user asked
     # for it to be)

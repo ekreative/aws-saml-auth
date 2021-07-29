@@ -9,7 +9,7 @@ import base64
 from bs4 import BeautifulSoup
 
 from mock import Mock
-from aws_google_auth import google
+from aws_saml_auth import google
 
 
 class TestGoogle(unittest.TestCase):

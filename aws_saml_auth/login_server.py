@@ -6,7 +6,7 @@ This HTTP server for capturing the SAMLResponse that is redirected to 127.0.0.1
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 
-from aws_google_auth import util
+from aws_saml_auth import util
 
 class LoginServer(HTTPServer):
     post_data = {}

@@ -2,7 +2,7 @@
 
 import unittest
 
-from aws_google_auth import parse_args
+from aws_saml_auth import parse_args
 
 
 class TestPythonFailOnVersion(unittest.TestCase):

@@ -3,8 +3,8 @@
 import unittest
 import mock
 
-from aws_google_auth import amazon
-from aws_google_auth import configuration
+from aws_saml_auth import amazon
+from aws_saml_auth import configuration
 from os import path
 import os
 

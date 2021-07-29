@@ -1,22 +1,22 @@
-aws-google-auth
-===============
+aws-saml-auth
+=============
 
 |github-badge| |docker-badge| |pypi-badge| |coveralls-badge|
 
-.. |github-badge| image:: https://github.com/cevoaustralia/aws-google-auth/workflows/Python%20package/badge.svg
-   :target: https://github.com/cevoaustralia/aws-google-auth/actions
+.. |github-badge| image:: https://github.com/ekreative/aws-saml-auth/workflows/Python%20package/badge.svg
+   :target: https://github.com/ekreative/aws-saml-auth/actions
    :alt: GitHub build badge
 
-.. |docker-badge| image:: https://img.shields.io/docker/build/cevoaustralia/aws-google-auth.svg
-   :target: https://hub.docker.com/r/cevoaustralia/aws-google-auth/
+.. |docker-badge| image:: https://img.shields.io/docker/build/ekreative/aws-saml-auth.svg
+   :target: https://hub.docker.com/r/ekreative/aws-saml-auth/
    :alt: Docker build status badge
 
-.. |pypi-badge| image:: https://img.shields.io/pypi/v/aws-google-auth.svg
-   :target: https://pypi.python.org/pypi/aws-google-auth/
+.. |pypi-badge| image:: https://img.shields.io/pypi/v/aws-saml-auth.svg
+   :target: https://pypi.python.org/pypi/aws-saml-auth/
    :alt: PyPI version badge
 
-.. |coveralls-badge| image:: https://coveralls.io/repos/github/cevoaustralia/aws-google-auth/badge.svg?branch=master
-   :target: https://coveralls.io/github/cevoaustralia/aws-google-auth?branch=master
+.. |coveralls-badge| image:: https://coveralls.io/repos/github/ekreative/aws-saml-auth/badge.svg?branch=master
+   :target: https://coveralls.io/github/ekreative/aws-saml-auth?branch=master
 
 This command-line tool allows you to acquire AWS temporary (STS)
 credentials using Google Apps as a federated (Single Sign-On, or SSO)
@@ -65,7 +65,7 @@ somewhere, for example
 
 .. code:: shell
 
-    gcloud run deploy --image cevoaustralia/aws-google-auth --args=--redirect-server --platform managed
+    gcloud run deploy --image ekreative/aws-saml-auth --args=--redirect-server --platform managed
 
 Then change your Google Apps SAML settings so the ``ACS URL`` points to the redirect server.
 
@@ -81,17 +81,17 @@ local system:
 .. code:: shell
 
     # For basic installation
-    localhost$ sudo pip install aws-google-auth
+    localhost$ sudo pip install aws-saml-auth
 
     # For installation with U2F support
-    localhost$ sudo pip install aws-google-auth[u2f]
+    localhost$ sudo pip install aws-saml-auth[u2f]
 
 
 *Note* If using ZSH you will need to quote the install, as below:
 
 .. code:: shell
 
-   localhost$ sudo pip install "aws-google-auth[u2f]"
+   localhost$ sudo pip install "aws-saml-auth[u2f]"
 
 If you don't want to have the tool installed on your local system, or if
 you prefer to isolate changes, there is a Dockerfile provided, which you
@@ -100,15 +100,15 @@ can build with:
 .. code:: shell
 
     # Perform local build
-    localhost$ cd ..../aws-google-auth && docker build -t aws-google-auth .
+    localhost$ cd ..../aws-saml-auth && docker build -t aws-saml-auth .
 
     # Use the Docker Hub version
-    localhost$ docker pull cevoaustralia/aws-google-auth
+    localhost$ docker pull ekreative/aws-saml-auth
 
 Development
 -----------
 
-If you want to develop the AWS-Google-Auth tool itself, we thank you! In order
+If you want to develop the Aws-saml-auth tool itself, we thank you! In order
 to help you get rolling, you'll want to install locally with pip. Of course,
 you can use your own regular workflow, with tools like `virtualenv <https://virtualenv.pypa.io/en/stable/>`__.
 
@@ -128,8 +128,8 @@ Usage
 
 .. code:: shell
 
-    $ aws-google-auth -h
-    usage: aws-google-auth [-h] [-u USERNAME | -b | --redirect-server] [-I IDP_ID] [-S SP_ID] [-R REGION] [-d DURATION | --auto-duration] [-p PROFILE] [-A ACCOUNT] [-D] [-q] [--bg-response BG_RESPONSE] [--saml-assertion SAML_ASSERTION]
+    $ aws-saml-auth -h
+    usage: aws-saml-auth [-h] [-u USERNAME | -b | --redirect-server] [-I IDP_ID] [-S SP_ID] [-R REGION] [-d DURATION | --auto-duration] [-p PROFILE] [-A ACCOUNT] [-D] [-q] [--bg-response BG_RESPONSE] [--saml-assertion SAML_ASSERTION]
                        [--no-cache] [--print-creds | --credential-process] [--resolve-aliases] [--save-failure-html] [--save-saml-flow] [--port PORT] [-a | -r ROLE_ARN] [-k] [-l {debug,info,warn}] [-V]
 
     Acquire temporary AWS credentials via Google SSO
@@ -183,7 +183,7 @@ for more information.
 Native Python
 ~~~~~~~~~~~~~
 
-1. Execute ``aws-google-auth``
+1. Execute ``aws-saml-auth``
 2. You will be prompted to supply each parameter
 
 *Note* You can skip prompts by either passing parameters to the command, or setting the specified Environment variables.
@@ -195,7 +195,7 @@ In you aws config file you can setup a profile to use the credential process
 
 ```ini
 [profile klekt]
-credential_process = aws-google-auth --credential-process
+credential_process = aws-saml-auth --credential-process
 region = eu-west-1
 ```
 
@@ -217,7 +217,7 @@ Via Docker
    ``ROLE_ARN``: Optional ARN of the role to assume
 
 2. For Docker:
-   ``docker run -it -e GOOGLE_USERNAME -e GOOGLE_IDP_ID -e GOOGLE_SP_ID -e AWS_PROFILE -e ROLE_ARN -v ~/.aws:/root/.aws cevoaustralia/aws-google-auth``
+   ``docker run -it -e GOOGLE_USERNAME -e GOOGLE_IDP_ID -e GOOGLE_SP_ID -e AWS_PROFILE -e ROLE_ARN -v ~/.aws:/root/.aws ekreative/aws-saml-auth``
 
 You'll be prompted for your password. If you've set up an MFA token for
 your Google account, you'll also be prompted for the current token
@@ -235,15 +235,15 @@ Feeding password from stdin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To enhance usability when using third party tools for managing passwords (aka password manager) you can feed data in
-``aws-google-auth`` from ``stdin``.
+``aws-saml-auth`` from ``stdin``.
 
-When receiving data from ``stdin`` ``aws-google-auth`` disables the interactive prompt and uses ``stdin`` data.
+When receiving data from ``stdin`` ``aws-saml-auth`` disables the interactive prompt and uses ``stdin`` data.
 
 Before `#82 <https://github.com/cevoaustralia/aws-google-auth/issues/82>`_, all interactive prompts could be fed from ``stdin`` already apart from the ``Google Password:`` prompt.
 
 Example usage:
 ```
-$ password-manager show password | aws-google-auth
+$ password-manager show password | aws-saml-auth
 Google Password: MFA token:
 Assuming arn:aws:iam::123456789012:role/admin
 Credentials Expiration: ...
@@ -256,7 +256,7 @@ password leakage to shell history.
 Storage of profile credentials
 ------------------------------
 
-Through the use of AWS profiles, using the ``-p`` or ``--profile`` flag, the ``aws-google-auth`` utility will store the supplied username, IDP and SP details in your ``./aws/config`` files.
+Through the use of AWS profiles, using the ``-p`` or ``--profile`` flag, the ``aws-saml-auth`` utility will store the supplied username, IDP and SP details in your ``./aws/config`` files.
 
 When re-authenticating using the same profile, the values will be remembered to speed up the re-authentication process.
 This enables an approach that enables you to enter your username, IPD and SP values once and then after only need to re-enter your password (and MFA if enabled).
@@ -264,13 +264,13 @@ This enables an approach that enables you to enter your username, IPD and SP val
 Creating an alias as below can be a quick and easy way to re-authenticate with a simple command shortcut.
 
 ```
-alias aws-development='unset AWS_PROFILE; aws-google-auth -I $GOOGLE_IDP_ID -S $GOOGLE_SP_ID -u $USERNAME -p aws-dev ; export AWS_PROFILE=aws-dev'
+alias aws-development='unset AWS_PROFILE; aws-saml-auth -I $GOOGLE_IDP_ID -S $GOOGLE_SP_ID -u $USERNAME -p aws-dev ; export AWS_PROFILE=aws-dev'
 ```
 
 Or, if you've alredy established a profile with valid cached values:
 
 ```
-alias aws-development='unset AWS_PROFILE; aws-google-auth -p aws-dev ; export AWS_PROFILE=aws-dev'
+alias aws-development='unset AWS_PROFILE; aws-saml-auth -p aws-dev ; export AWS_PROFILE=aws-dev'
 ```
 
 

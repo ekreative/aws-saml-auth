@@ -2,7 +2,7 @@
 
 import unittest
 
-from aws_google_auth import configuration
+from aws_saml_auth import configuration
 
 
 class TestConfigurationMethods(unittest.TestCase):

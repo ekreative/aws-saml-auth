@@ -42,6 +42,6 @@ jobs:
         pip install coverage
         pip install coveralls
         pip install pytest
-        coverage run --source=aws_google_auth/ --omit=aws_google_auth/tests/* setup.py test
+        coverage run --source=aws_saml_auth/ --omit=aws_saml_auth/tests/* setup.py test
         coverage report
         coveralls

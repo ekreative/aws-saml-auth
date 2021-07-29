@@ -12,7 +12,7 @@ from threading import Thread
 from botocore.exceptions import ClientError, ProfileNotFound
 from lxml import etree
 
-from aws_google_auth.google import ExpectedGoogleException
+from aws_saml_auth.google import ExpectedGoogleException
 
 
 class Amazon:

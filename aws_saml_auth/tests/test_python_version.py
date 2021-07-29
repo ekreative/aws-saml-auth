@@ -1,4 +1,4 @@
-from aws_google_auth import exit_if_unsupported_python
+from aws_saml_auth import exit_if_unsupported_python
 
 import unittest
 import sys

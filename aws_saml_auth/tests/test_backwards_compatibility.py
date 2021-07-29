@@ -5,7 +5,7 @@ from random import randint
 
 import configparser
 
-from aws_google_auth import configuration
+from aws_saml_auth import configuration
 
 
 class TestConfigurationPersistence(unittest.TestCase):
@@ -16,10 +16,10 @@ class TestConfigurationPersistence(unittest.TestCase):
         # Pick a profile name that is clear it's for testing. We'll delete it
         # after, but in case something goes wrong we don't want to use
         # something that could clobber user input.
-        self.c.profile = "aws_google_auth_test_{}".format(randint(100, 999))
+        self.c.profile = "aws_saml_auth_test_{}".format(randint(100, 999))
 
         # Pick a string to do password leakage tests.
-        self.c.password = "aws_google_auth_test_password_{}".format(randint(100, 999))
+        self.c.password = "aws_saml_auth_test_password_{}".format(randint(100, 999))
 
         self.c.region = "us-east-1"
         self.c.ask_role = False

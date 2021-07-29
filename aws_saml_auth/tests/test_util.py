@@ -5,7 +5,7 @@ import unittest
 
 from mock import patch, MagicMock
 
-from aws_google_auth import util
+from aws_saml_auth import util
 
 
 class TestUtilMethods(unittest.TestCase):
