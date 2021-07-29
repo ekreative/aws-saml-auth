@@ -18,10 +18,7 @@ class TestConfigurationMethods(unittest.TestCase):
         # Duration must be an integer
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.password = "hunter2"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.duration = "bad_type"
         c.region = "sample_region"
         with self.assertRaises(AssertionError) as e:
@@ -31,10 +28,7 @@ class TestConfigurationMethods(unittest.TestCase):
         # Duration can not be negative
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.duration = -1
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
@@ -42,17 +36,11 @@ class TestConfigurationMethods(unittest.TestCase):
 
         # Duration can not be greater than MAX_DURATION
         valid = configuration.Configuration()
-        valid.idp_id = "sample_idp_id"
-        c.password = "hunter2"
-        valid.sp_id = "sample_sp_id"
-        valid.username = "sample_username"
+        valid.login_url = "sample_login_url"
         valid.duration = 900
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.duration = (valid.max_duration + 1)
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
@@ -61,10 +49,7 @@ class TestConfigurationMethods(unittest.TestCase):
     def test_duration_valid_values(self):
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.duration = 900
         self.assertEqual(c.duration, 900)
         c.raise_if_invalid()
@@ -78,10 +63,7 @@ class TestConfigurationMethods(unittest.TestCase):
     def test_duration_defaults_to_max_duration(self):
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         self.assertEqual(c.duration, c.max_duration)
         c.raise_if_invalid()
 
@@ -89,10 +71,7 @@ class TestConfigurationMethods(unittest.TestCase):
         # ask_role must be a boolean
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.ask_role = "bad_value"
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
@@ -101,19 +80,13 @@ class TestConfigurationMethods(unittest.TestCase):
     def test_ask_role_valid_values(self):
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.ask_role = True
         self.assertTrue(c.ask_role)
         c.raise_if_invalid()
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.password = "hunter2"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.ask_role = False
         self.assertFalse(c.ask_role)
         c.raise_if_invalid()
@@ -121,136 +94,22 @@ class TestConfigurationMethods(unittest.TestCase):
     def test_ask_role_optional(self):
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "samlple_login_url"
         self.assertFalse(c.ask_role)
         c.raise_if_invalid()
 
-    def test_idp_id_invalid_values(self):
-        # idp_id must not be None
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
-        with self.assertRaises(AssertionError) as e:
-            c.raise_if_invalid()
-        self.assertIn("Expected idp_id to be set to non-None value.", str(e.exception))
-
-    def test_idp_id_valid_values(self):
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
-        self.assertEqual(c.idp_id, "sample_idp_id")
-        c.raise_if_invalid()
-        c.idp_id = 123456
-        self.assertEqual(c.idp_id, 123456)
-        c.raise_if_invalid()
-
-    def test_sp_id_invalid_values(self):
+    def test_login_url_invalid_values(self):
         # sp_id must not be None
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
-        self.assertIn("Expected sp_id to be set to non-None value.", str(e.exception))
-
-    def test_username_valid_values(self):
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.password = "hunter2"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
-        self.assertEqual(c.username, "sample_username")
-        c.raise_if_invalid()
-        c.username = "123456"
-        self.assertEqual(c.username, "123456")
-        c.raise_if_invalid()
-
-    def test_username_invalid_values(self):
-        # username must be set
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.password = "hunter2"
-        c.sp_id = "sample_sp_id"
-        with self.assertRaises(AssertionError) as e:
-            c.raise_if_invalid()
-        self.assertIn("Expected username to be a string.", str(e.exception))
-        # username must be be string
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = 123456
-        with self.assertRaises(AssertionError) as e:
-            c.raise_if_invalid()
-        self.assertIn("Expected username to be a string.", str(e.exception))
-
-    def test_password_valid_values(self):
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.password = "hunter2"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
-        self.assertEqual(c.password, "hunter2")
-        c.raise_if_invalid()
-        c.password = "123456"
-        self.assertEqual(c.password, "123456")
-        c.raise_if_invalid()
-
-    def test_password_invalid_values(self):
-        # password must be set
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.username = "sample_username"
-        c.sp_id = "sample_sp_id"
-        with self.assertRaises(AssertionError) as e:
-            c.raise_if_invalid()
-        self.assertIn("Expected password to be a string.", str(e.exception))
-        # password must be be string
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = 123456
-        c.username = "sample_username"
-        with self.assertRaises(AssertionError) as e:
-            c.raise_if_invalid()
-        self.assertIn("Expected password to be a string.", str(e.exception))
-
-    def test_sp_id_valid_values(self):
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
-        c.password = "hunter2"
-        self.assertEqual(c.sp_id, "sample_sp_id")
-        c.raise_if_invalid()
-        c.sp_id = 123456
-        self.assertEqual(c.sp_id, 123456)
-        c.raise_if_invalid()
+        self.assertIn("Expected login_url to be set to non-None value.", str(e.exception))
 
     def test_profile_defaults_to_sts(self):
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.password = "hunter2"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         self.assertEqual(c.profile, "sts")
         c.raise_if_invalid()
 
@@ -258,10 +117,7 @@ class TestConfigurationMethods(unittest.TestCase):
         # profile must be a string
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.profile = 123456
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
@@ -270,10 +126,7 @@ class TestConfigurationMethods(unittest.TestCase):
     def test_profile_valid_values(self):
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.password = "hunter2"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.profile = "default"
         self.assertEqual(c.profile, "default")
         c.raise_if_invalid()
@@ -284,20 +137,14 @@ class TestConfigurationMethods(unittest.TestCase):
     def test_profile_defaults(self):
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.password = "hunter2"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         self.assertEqual(c.profile, 'sts')
         c.raise_if_invalid()
 
     def test_region_invalid_values(self):
         # region must be a string
         c = configuration.Configuration()
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.region = 1234
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
@@ -305,10 +152,7 @@ class TestConfigurationMethods(unittest.TestCase):
 
     def test_region_valid_values(self):
         c = configuration.Configuration()
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.region = "us-east-1"
         self.assertEqual(c.region, "us-east-1")
         c.raise_if_invalid()
@@ -318,10 +162,7 @@ class TestConfigurationMethods(unittest.TestCase):
 
     def test_region_defaults_to_none(self):
         c = configuration.Configuration()
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
-        c.password = "hunter2"
+        c.login_url = "sample_login_url"
         self.assertEqual(c.region, None)
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
@@ -331,10 +172,7 @@ class TestConfigurationMethods(unittest.TestCase):
         # role_arn must be a string
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.role_arn = 1234
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
@@ -343,10 +181,7 @@ class TestConfigurationMethods(unittest.TestCase):
         # role_arn be a arn-looking string
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         c.role_arn = "bad_string"
         with self.assertRaises(AssertionError) as e:
             c.raise_if_invalid()
@@ -355,75 +190,17 @@ class TestConfigurationMethods(unittest.TestCase):
     def test_role_arn_is_optional(self):
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.password = "hunter2"
-        c.username = "sample_username"
+        c.login_url = "sample_login_url"
         self.assertIsNone(c.role_arn)
         c.raise_if_invalid()
 
     def test_role_arn_valid_values(self):
         c = configuration.Configuration()
         c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
-        c.password = "hunter2"
+        c.login_url = "sample_login_url"
         c.role_arn = "arn:aws:iam::some_arn_1"
         self.assertEqual(c.role_arn, "arn:aws:iam::some_arn_1")
         c.raise_if_invalid()
         c.role_arn = "arn:aws:iam::some_other_arn_2"
         self.assertEqual(c.role_arn, "arn:aws:iam::some_other_arn_2")
-        c.raise_if_invalid()
-
-    def test_u2f_disabled_invalid_values(self):
-        # u2f_disabled must be a boolean
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
-        c.password = "hunter2"
-        c.u2f_disabled = 1234
-        with self.assertRaises(AssertionError) as e:
-            c.raise_if_invalid()
-        self.assertIn("Expected u2f_disabled to be a boolean.", str(e.exception))
-
-    def test_u2f_disabled_valid_values(self):
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.password = "hunter2"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
-        c.u2f_disabled = True
-        self.assertTrue(c.u2f_disabled)
-        c.raise_if_invalid()
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.password = "hunter2"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
-        c.u2f_disabled = False
-        self.assertFalse(c.u2f_disabled)
-        c.raise_if_invalid()
-
-    def test_u2f_disabled_is_optional(self):
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.password = "hunter2"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
-        self.assertFalse(c.u2f_disabled)
-        c.raise_if_invalid()
-
-    def test_unicode_password(self):
-        c = configuration.Configuration()
-        c.region = "sample_region"
-        c.password = u"hunter2"
-        c.idp_id = "sample_idp_id"
-        c.sp_id = "sample_sp_id"
-        c.username = "sample_username"
         c.raise_if_invalid()

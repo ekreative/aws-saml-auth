@@ -12,7 +12,10 @@ from threading import Thread
 from botocore.exceptions import ClientError, ProfileNotFound
 from lxml import etree
 
-from aws_saml_auth.google import ExpectedGoogleException
+
+class ExpectedAmazonException(Exception):
+    def __init__(self, *args):
+        super(ExpectedAmazonException, self).__init__(*args)
 
 
 class Amazon:
@@ -39,7 +42,7 @@ class Amazon:
                 os.environ['AWS_PROFILE'] = profile
             return client
         except ProfileNotFound as ex:
-            raise ExpectedGoogleException("Error : {}.".format(ex))
+            raise ExpectedAmazonException("Error : {}.".format(ex))
 
     @property
     def base64_encoded_saml(self):

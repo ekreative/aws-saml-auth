@@ -39,8 +39,8 @@ setup(
     download_url='https://github.com/ekreative/aws-saml-auth/archive/%s.tar.gz' % version['__version__'],
 
     # Author details
-    author='Colin Panisset',
-    author_email='colin.panisset@cevo.com.au',
+    author='Fred Cox',
+    author_email='fred@ekreative.com',
 
     # Choose your license
     license='MIT',
@@ -51,7 +51,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
@@ -63,8 +63,8 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
 
     ],
 
@@ -85,9 +85,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     # install_requires=['peppercorn'],
     install_requires=[
-        'beautifulsoup4', 'boto3', 'configparser', 'filelock',
-        'keyring', 'keyrings.alt', 'lxml', 'Pillow', 'requests',
-        'six', 'tabulate', 'tzlocal'
+        'boto3', 'configparser', 'filelock', 'lxml', 'six', 'tabulate', 'tzlocal'
     ],
 
     # List additional groups of dependencies here (e.g. development
@@ -99,7 +97,7 @@ setup(
     #     'test': ['coverage'],
     # },
     extras_require={
-        'u2f': ['python-u2flib-host'],
+        'test': ['nose', 'mock'],
     },
 
     # If there are data files included in your packages that need to be

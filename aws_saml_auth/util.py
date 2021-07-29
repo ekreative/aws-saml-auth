@@ -93,17 +93,6 @@ class Util:
             return object
 
     @staticmethod
-    def get_password(prompt):
-        if sys.stdin.isatty():
-            password = getpass.getpass(prompt)
-        else:
-            print(prompt, end="")
-            sys.stdout.flush()
-            password = sys.stdin.readline()
-            print("")
-        return password
-
-    @staticmethod
     def parse_post(handler):
         if 'content-type' not in handler.headers:
             return {}

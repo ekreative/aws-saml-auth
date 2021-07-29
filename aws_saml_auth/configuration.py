@@ -7,6 +7,7 @@ import filelock
 import logging
 from datetime import datetime
 from dateutil import tz
+import hashlib
 
 try:
     from backports import configparser
@@ -25,25 +26,19 @@ class Configuration(object):
 
         # Set up some defaults. These can be overridden as fit.
         self.ask_role = False
-        self.keyring = False
         self.duration = self.max_duration
         self.auto_duration = False
-        self.idp_id = None
-        self.password = None
+        self.login_url = None
         self.profile = "sts"
         self.region = None
         self.role_arn = None
         self.__saml_cache = None
         self.__token_cache = None
-        self.sp_id = None
-        self.u2f_disabled = False
-        self.resolve_aliases = False
-        self.username = None
+        self.resolve_aliases = True
         self.print_creds = False
+        self.credential_process = False
         self.quiet = False
-        self.bg_response = None
         self.account = ""
-        self.browser = False
         self.port = 8000
 
     # For the "~/.aws/config" file, we use the format "[profile testing]"
@@ -71,7 +66,9 @@ class Configuration(object):
 
     @property
     def saml_cache_file(self):
-        return self.credentials_file.replace('credentials', 'saml_cache_%s.xml' % self.idp_id)
+        assert (self.login_url is not None), "Cannot look for smal cache file if no login url"
+
+        return self.credentials_file.replace('credentials', 'saml_cache_%s.xml' % hashlib.sha1(self.login_url.encode('utf-8')).hexdigest())
 
     def ensure_config_files_exist(self):
         for file in [self.config_file, self.credentials_file]:
@@ -118,9 +115,6 @@ class Configuration(object):
         # ask_role
         assert (self.ask_role.__class__ is bool), "Expected ask_role to be a boolean. Got {}.".format(self.ask_role.__class__)
 
-        # keyring
-        assert (self.keyring.__class__ is bool), "Expected keyring to be a boolean. Got {}.".format(self.keyring.__class__)
-
         # duration
         assert (self.duration.__class__ is int), "Expected duration to be an integer. Got {}.".format(self.duration.__class__)
         assert (self.duration >= 900), "Expected duration to be greater than or equal to 900. Got {}.".format(self.duration)
@@ -135,30 +129,13 @@ class Configuration(object):
         # region
         assert (self.region.__class__ is str), "Expected region to be a string. Got {}.".format(self.region.__class__)
 
-        # idp_id
-        assert (self.idp_id is not None), "Expected idp_id to be set to non-None value."
-
-        # sp_id
-        assert (self.sp_id is not None), "Expected sp_id to be set to non-None value."
-
-        # username
-        assert (self.username.__class__ is str), "Expected username to be a string. Got {}.".format(self.username.__class__)
-
-        # password
-        try:
-            assert (type(self.password) in [str, unicode]), "Expected password to be a string. Got {}.".format(
-                type(self.password))
-        except NameError:
-            assert (type(self.password) is str), "Expected password to be a string. Got {}.".format(
-                type(self.password))
+        # login_url
+        assert (self.login_url is not None), "Expected login_url to be set to non-None value."
 
         # role_arn (Can be blank, we'll just prompt)
         if self.role_arn is not None:
             assert (self.role_arn.__class__ is str), "Expected role_arn to be None or a string. Got {}.".format(self.role_arn.__class__)
             assert ("arn:aws:iam::" in self.role_arn or "arn:aws-us-gov:iam::" in self.role_arn), "Expected role_arn to contain 'arn:aws:iam::'. Got '{}'.".format(self.role_arn)
-
-        # u2f_disabled
-        assert (self.u2f_disabled.__class__ is bool), "Expected u2f_disabled to be a boolean. Got {}.".format(self.u2f_disabled.__class__)
 
         # quiet
         assert (self.quiet.__class__ is bool), "Expected quiet to be a boolean. Got {}.".format(self.quiet.__class__)
@@ -187,16 +164,10 @@ class Configuration(object):
             if not config_parser.has_section(profile):
                 config_parser.add_section(profile)
             config_parser.set(profile, 'region', self.region)
-            config_parser.set(profile, 'google_config.ask_role', self.ask_role)
-            config_parser.set(profile, 'google_config.keyring', self.keyring)
-            config_parser.set(profile, 'google_config.duration', self.duration)
-            config_parser.set(profile, 'google_config.google_idp_id', self.idp_id)
-            config_parser.set(profile, 'google_config.role_arn', self.role_arn)
-            config_parser.set(profile, 'google_config.google_sp_id', self.sp_id)
-            config_parser.set(profile, 'google_config.u2f_disabled', self.u2f_disabled)
-            config_parser.set(profile, 'google_config.google_username', self.username)
-            config_parser.set(profile, 'google_config.bg_response', self.bg_response)
-            config_parser.set(profile, 'google_config.browser', self.browser)
+            config_parser.set(profile, 'asa.ask_role', self.ask_role)
+            config_parser.set(profile, 'asa.duration', self.duration)
+            config_parser.set(profile, 'asa.login_url', self.login_url)
+            config_parser.set(profile, 'asa.role_arn', self.role_arn)
 
             with open(self.config_file, 'w+') as f:
                 config_parser.write(f)
@@ -246,11 +217,11 @@ class Configuration(object):
             credentials_parser.read(self.credentials_file)
             if not credentials_parser.has_section(self.profile):
                 credentials_parser.add_section(self.profile)
-            credentials_parser.set(self.profile, 'google_config.aws_access_key_id', amazon_object.access_key_id)
-            credentials_parser.set(self.profile, 'google_config.aws_secret_access_key', amazon_object.secret_access_key)
-            credentials_parser.set(self.profile, 'google_config.aws_session_expiration',
+            credentials_parser.set(self.profile, 'asa.aws_access_key_id', amazon_object.access_key_id)
+            credentials_parser.set(self.profile, 'asa.aws_secret_access_key', amazon_object.secret_access_key)
+            credentials_parser.set(self.profile, 'asa.aws_session_expiration',
                                    amazon_object.expiration.strftime('%Y-%m-%dT%H:%M:%S%z'))
-            credentials_parser.set(self.profile, 'google_config.aws_session_token', amazon_object.session_token)
+            credentials_parser.set(self.profile, 'asa.aws_session_token', amazon_object.session_token)
 
             with open(self.credentials_file, 'w+') as f:
                 credentials_parser.write(f)
@@ -277,54 +248,32 @@ class Configuration(object):
             self.profile = profile
 
             # Ask Role
-            read_ask_role = config_parser[profile_string].getboolean('google_config.ask_role', None)
+            read_ask_role = config_parser[profile_string].getboolean('asa.ask_role', None)
             self.ask_role = coalesce(read_ask_role, self.ask_role)
 
-            # Keyring
-            read_keyring = config_parser[profile_string].getboolean('google_config.keyring', None)
-            self.keyring = coalesce(read_keyring, self.keyring)
-
             # Duration
-            read_duration = config_parser[profile_string].getint('google_config.duration', None)
+            read_duration = config_parser[profile_string].getint('asa.duration', None)
             self.duration = coalesce(read_duration, self.duration)
 
-            # IDP ID
-            read_idp_id = unicode_to_string(config_parser[profile_string].get('google_config.google_idp_id', None))
-            self.idp_id = coalesce(read_idp_id, self.idp_id)
+            # Login URL
+            read_login_url = unicode_to_string(config_parser[profile_string].get('asa.login_url', None))
+            self.login_url = coalesce(read_login_url, self.login_url)
 
             # Region
             read_region = unicode_to_string(config_parser[profile_string].get('region', None))
             self.region = coalesce(read_region, self.region)
 
             # Role ARN
-            read_role_arn = unicode_to_string(config_parser[profile_string].get('google_config.role_arn', None))
+            read_role_arn = unicode_to_string(config_parser[profile_string].get('asa.role_arn', None))
             self.role_arn = coalesce(read_role_arn, self.role_arn)
-
-            # SP ID
-            read_sp_id = unicode_to_string(config_parser[profile_string].get('google_config.google_sp_id', None))
-            self.sp_id = coalesce(read_sp_id, self.sp_id)
-
-            # U2F Disabled
-            read_u2f_disabled = config_parser[profile_string].getboolean('google_config.u2f_disabled', None)
-            self.u2f_disabled = coalesce(read_u2f_disabled, self.u2f_disabled)
-
-            # Username
-            read_username = unicode_to_string(config_parser[profile_string].get('google_config.google_username', None))
-            self.username = coalesce(read_username, self.username)
-
-            # bg_response
-            read_bg_response = unicode_to_string(config_parser[profile_string].get('google_config.bg_response', None))
-            self.bg_response = coalesce(read_bg_response, self.bg_response)
 
             # Account
             read_account = unicode_to_string(config_parser[profile_string].get('account', None))
             self.account = coalesce(read_account, self.account)
 
-            # Browser
-            read_browser = config_parser[profile_string].getboolean('google_config.browser', None)
-            self.browser = coalesce(read_browser, self.browser)
-
     def read_saml_cache(self):
+        if self.login_url is None:
+            return
         try:
             with open(self.saml_cache_file, 'r') as f:
                 self.__saml_cache = f.read().encode("utf-8")
@@ -343,10 +292,10 @@ class Configuration(object):
 
         if credentials_parser.has_section(self.profile):
             token = {}
-            token['AccessKeyId'] = unicode_to_string(credentials_parser[self.profile].get('google_config.aws_access_key_id', None))
-            token['SecretAccessKey'] = unicode_to_string(credentials_parser[self.profile].get('google_config.aws_secret_access_key', None))
-            token['SessionToken'] = unicode_to_string(credentials_parser[self.profile].get('google_config.aws_session_token', None))
-            read_expiration = unicode_to_string(credentials_parser[self.profile].get('google_config.aws_session_expiration', None))
+            token['AccessKeyId'] = unicode_to_string(credentials_parser[self.profile].get('asa.aws_access_key_id', None))
+            token['SecretAccessKey'] = unicode_to_string(credentials_parser[self.profile].get('asa.aws_secret_access_key', None))
+            token['SessionToken'] = unicode_to_string(credentials_parser[self.profile].get('asa.aws_session_token', None))
+            read_expiration = unicode_to_string(credentials_parser[self.profile].get('asa.aws_session_expiration', None))
             if read_expiration is not None:
                 token['Expiration'] = datetime.strptime(read_expiration, '%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=tz.UTC)
             else:

@@ -7,56 +7,45 @@ import os
 import sys
 import logging
 
-import keyring
 from six import print_ as print
 from tzlocal import get_localzone
 
 from aws_saml_auth import _version
 from aws_saml_auth import amazon
 from aws_saml_auth import configuration
-from aws_saml_auth import google
+from aws_saml_auth import saml
 from aws_saml_auth import util
 
 
 def parse_args(args):
     parser = argparse.ArgumentParser(
         prog="aws-saml-auth",
-        description="Acquire temporary AWS credentials via Google SSO",
+        description="Acquire temporary AWS credentials via SAML",
     )
 
-    google_group = parser.add_mutually_exclusive_group()
-    google_group.add_argument('-u', '--username', help='Google Apps username ($GOOGLE_USERNAME)')
-    google_group.add_argument('-b', '--browser', action='store_true', help='Google login in the browser (Requires SAML redirect server) ($GOOGLE_BROWSER=1)')
-    google_group.add_argument('--redirect-server', action='store_true', help='Run the redirect server on port ($PORT)')
-    parser.add_argument('-I', '--idp-id', help='Google SSO IDP identifier ($GOOGLE_IDP_ID)')
-    parser.add_argument('-S', '--sp-id', help='Google SSO SP identifier ($GOOGLE_SP_ID)')
+    main_group = parser.add_mutually_exclusive_group()
+    main_group.add_argument('--redirect-server', action='store_true', help='Run the redirect server on port ($PORT)')
+    main_group.add_argument('-L', '--login-url', help='SAML Provider login url ($ASA_LOGIN_URL)')
     parser.add_argument('-R', '--region', help='AWS region endpoint ($AWS_DEFAULT_REGION)')
     duration_group = parser.add_mutually_exclusive_group()
-    duration_group.add_argument('-d', '--duration', type=int, help='Credential duration in seconds (defaults to value of $DURATION, then falls back to 43200)')
-    duration_group.add_argument('--auto-duration', action='store_true', help='Tries to use the longest allowed duration ($AUTO_DURATION=1)')
+    duration_group.add_argument('-d', '--duration', type=int, help='Credential duration in seconds (defaults to value of $ASA_DURATION, then falls back to 43200)')
+    duration_group.add_argument('--auto-duration', action='store_true', help='Tries to use the longest allowed duration ($ASA_AUTO_DURATION=1)')
     parser.add_argument('-p', '--profile', help='AWS profile (defaults to value of $AWS_PROFILE, then falls back to \'sts\')')
-    parser.add_argument('-A', '--account', help='Filter for specific AWS account.')
-    parser.add_argument('-D', '--disable-u2f', action='store_true', help='Disable U2F functionality.')
+    parser.add_argument('-A', '--account', help='Filter for specific AWS account ($ASA_AWS_ACCOUNT)')
     parser.add_argument('-q', '--quiet', action='store_true', help='Quiet output')
-    parser.add_argument('--bg-response', help='Override default bgresponse challenge token.')
-    parser.add_argument('--saml-assertion', dest="saml_assertion", help='Base64 encoded SAML assertion to use.')
-    parser.add_argument('--no-cache', dest="saml_cache", action='store_false', help='Do not cache the SAML Assertion.')
+    parser.add_argument('--saml-assertion', dest="saml_assertion", help='Base64 encoded SAML assertion to use')
+    parser.add_argument('--no-saml-cache', dest="saml_cache", action='store_false', help='Do not cache the SAML Assertion')
     print_group = parser.add_mutually_exclusive_group()
-    print_group.add_argument('--print-creds', action='store_true', help='Print Credentials.')
-    print_group.add_argument('--credential-process', action='store_true',help='output suitable for aws cli credential_process ($AWS_CREDENTIAL_PROCESS=1)')
-    parser.add_argument('--resolve-aliases', action='store_true', help='Resolve AWS account aliases. ($RESOLVE_AWS_ALIASES=1)')
-    parser.add_argument('--save-failure-html', action='store_true', help='Write HTML failure responses to file for troubleshooting.')
-    parser.add_argument('--save-saml-flow', action='store_true', help='Write all GET and PUT requests and HTML responses to/from Google to files for troubleshooting.')
+    print_group.add_argument('--print-creds', action='store_true', help='Print Credentials')
+    print_group.add_argument('--credential-process', action='store_true',help='Output suitable for aws cli credential_process ($ASA_CREDENTIAL_PROCESS=1)')
+    parser.add_argument('--no-resolve-aliases', dest="resolve_aliases", action='store_false', help='Do not resolve AWS account aliases. ($ASA_NO_RESOLVE_ALIASES=1)')
     parser.add_argument('--port', type=int, help='Port for the redirect server ($PORT)')
 
     role_group = parser.add_mutually_exclusive_group()
-    role_group.add_argument('-a', '--ask-role', action='store_true', help='Set true to always pick the role ($AWS_ASK_ROLE=1)')
-    role_group.add_argument('-r', '--role-arn', help='The ARN of the role to assume')
-    parser.add_argument('-k', '--keyring', action='store_true', help='Use keyring for storing the password.')
-    parser.add_argument('-l', '--log', dest='log_level', choices=['debug',
-                        'info', 'warn'], default='warn', help='Select log level (default: %(default)s)')
-    parser.add_argument('-V', '--version', action='version',
-                        version='%(prog)s {version}'.format(version=_version.__version__))
+    role_group.add_argument('-a', '--ask-role', action='store_true', help='Set true to always pick the role ($ASA_ASK_ROLE=1)')
+    role_group.add_argument('-r', '--role-arn', help='The ARN of the role to assume ($ASA_ROLE_ARN)')
+    parser.add_argument('-l', '--log', dest='log_level', choices=['debug', 'info', 'warn'], default='warn', help='Select log level (default: %(default)s)')
+    parser.add_argument('-V', '--version', action='version', version='%(prog)s {version}'.format(version=_version.__version__))
 
     return parser.parse_args(args)
 
@@ -85,8 +74,16 @@ def cli(cli_args):
         logging.getLogger().setLevel(getattr(logging, args.log_level.upper(), None))
 
         config = resolve_config(args)
+        if args.redirect_server:
+            from aws_saml_auth.redirect_server import start_redirect_server
+            start_redirect_server(config.port)
+            return
+
         process_auth(args, config)
-    except google.ExpectedGoogleException as ex:
+    except amazon.ExpectedAmazonException as ex:
+        print(ex)
+        sys.exit(1)
+    except saml.ExpectedSamlException as ex:
         print(ex)
         sys.exit(1)
     except KeyboardInterrupt:
@@ -115,64 +112,45 @@ def resolve_config(args):
     config.read(config.profile)
 
     # Ask Role (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.ask_role = args.ask_role or os.getenv('AWS_ASK_ROLE') != None or config.ask_role != None
+    config.ask_role = args.ask_role or os.getenv('ASA_ASK_ROLE') != None or config.ask_role != None
 
     # Duration (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.duration = int(coalesce(
         args.duration,
-        os.getenv('DURATION'),
+        os.getenv('ASA_DURATION'),
         config.duration))
 
     # Automatic duration (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.auto_duration = args.auto_duration or os.getenv('AUTO_DURATION') != None
+    config.auto_duration = args.auto_duration or os.getenv('ASA_AUTO_DURATION') != None
 
-    # IDP ID (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.idp_id = coalesce(
-        args.idp_id,
-        os.getenv('GOOGLE_IDP_ID'),
-        config.idp_id)
+    # Login URL (Option priority = ARGS, ENV_VAR, DEFAULT)
+    config.login_url = coalesce(
+        args.login_url,
+        os.getenv('ASA_LOGIN_URL'),
+        config.login_url)
 
     # Region (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.region = coalesce(
         args.region,
-        os.getenv('AWS_DEFAULT_REGION'),
+        os.getenv('ASA_AWS_DEFAULT_REGION'),
         config.region)
 
     # ROLE ARN (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.role_arn = coalesce(
         args.role_arn,
-        os.getenv('AWS_ROLE_ARN'),
+        os.getenv('ASA_ROLE_ARN'),
         config.role_arn)
 
-    # SP ID (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.sp_id = coalesce(
-        args.sp_id,
-        os.getenv('GOOGLE_SP_ID'),
-        config.sp_id)
-
-    # U2F Disabled (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.u2f_disabled = args.disable_u2f or os.getenv('U2F_DISABLED') != None
-
     # Resolve AWS aliases enabled (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.resolve_aliases = args.resolve_aliases or os.getenv('RESOLVE_AWS_ALIASES') != None
-
-    config.browser = args.browser or os.getenv('GOOGLE_BROWSER') != None
-
-    # Username (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.username = coalesce(
-        args.username,
-        os.getenv('GOOGLE_USERNAME'),
-        config.username)
+    config.resolve_aliases = coalesce(
+        args.resolve_aliases,
+        config.resolve_aliases) or os.getenv('ASA_NO_RESOLVE_ALIASES') != None
 
     # Account (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.account = coalesce(
         args.account,
-        os.getenv('AWS_ACCOUNT'),
+        os.getenv('ASA_AWS_ACCOUNT'),
         config.account)
-
-    config.keyring = coalesce(
-        args.keyring,
-        config.keyring)
 
     config.print_creds = coalesce(
         args.print_creds,
@@ -183,21 +161,15 @@ def resolve_config(args):
         args.quiet,
         config.quiet)
 
-    config.bg_response = coalesce(
-        args.bg_response,
-        os.getenv('GOOGLE_BG_RESPONSE'),
-        config.bg_response)
-
     config.port = int(coalesce(
         args.port,
         os.getenv('PORT'),
         config.port))
 
-    config.credential_process = args.credential_process or os.getenv('AWS_CREDENTIAL_PROCESS') != None
+    config.credential_process = args.credential_process or os.getenv('ASA_CREDENTIAL_PROCESS') != None
     if config.credential_process:
         config.quiet = True
         config.ask_role = False
-        config.browser = True
         config.read_token_cache()
 
     config.read_saml_cache()
@@ -206,14 +178,13 @@ def resolve_config(args):
 
 
 def process_auth(args, config):
-    if args.redirect_server:
-        from aws_saml_auth.redirect_server import start_redirect_server
-        start_redirect_server(config.port)
-        return
-
     if config.region is None:
         config.region = util.Util.get_input("AWS Region: ")
         logging.debug('%s: region is: %s', __name__, config.region)
+
+    if config.login_url is None:
+        config.login_url = util.Util.get_input("Login URL: ")
+        logging.debug('%s: login url is: %s', __name__, config.login_url)
 
     # If there is a valid cache and the user opted to use it, use that instead
     # of prompting the user for input (it will also ignroe any set variables
@@ -227,46 +198,9 @@ def process_auth(args, config):
     elif args.saml_cache and config.saml_cache:
         saml_xml = config.saml_cache
         logging.info('%s: SAML cache found', __name__)
-    elif config.browser:
-        google_client = google.Google(config, save_failure=args.save_failure_html, save_flow=args.save_saml_flow)
-        saml_xml = google_client.do_browser_saml()
     else:
-        # No cache, continue without.
-        logging.info('%s: SAML cache not found', __name__)
-        if config.username is None:
-            config.username = util.Util.get_input("Google username: ")
-            logging.debug('%s: username is: %s', __name__, config.username)
-        if config.idp_id is None:
-            config.idp_id = util.Util.get_input("Google IDP ID: ")
-            logging.debug('%s: idp is: %s', __name__, config.idp_id)
-        if config.sp_id is None:
-            config.sp_id = util.Util.get_input("Google SP ID: ")
-            logging.debug('%s: sp is: %s', __name__, config.sp_id)
-
-        # There is no way (intentional) to pass in the password via the command
-        # line nor environment variables. This prevents password leakage.
-        keyring_password = None
-        if config.keyring:
-            keyring_password = keyring.get_password("aws-saml-auth", config.username)
-            if keyring_password:
-                config.password = keyring_password
-            else:
-                config.password = util.Util.get_password("Google Password: ")
-        else:
-            config.password = util.Util.get_password("Google Password: ")
-
-        # Validate Options
-        config.raise_if_invalid()
-
-        google_client = google.Google(config, save_failure=args.save_failure_html, save_flow=args.save_saml_flow)
-        google_client.do_login()
-        saml_xml = google_client.parse_saml()
-        logging.debug('%s: saml assertion is: %s', __name__, saml_xml)
-
-        # If we logged in correctly and we are using keyring then store the password
-        if config.keyring and keyring_password is None:
-            keyring.set_password(
-                "aws-saml-auth", config.username, config.password)
+        saml_client = saml.Saml(config)
+        saml_xml = saml_client.do_browser_saml()
 
     # We now have a new SAML value that can get cached (If the user asked
     # for it to be)
