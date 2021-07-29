@@ -6,4 +6,5 @@ six
 tabulate
 tzlocal
 nose
+mock
 black

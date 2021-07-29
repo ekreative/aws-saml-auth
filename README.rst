@@ -15,9 +15,6 @@ aws-saml-auth
    :target: https://pypi.python.org/pypi/aws-saml-auth/
    :alt: PyPI version badge
 
-.. |coveralls-badge| image:: https://coveralls.io/repos/github/ekreative/aws-saml-auth/badge.svg?branch=master
-   :target: https://coveralls.io/github/ekreative/aws-saml-auth?branch=master
-
 This command-line tool allows you to acquire AWS temporary (STS)
 credentials using Google Workspace as a federated (Single Sign-On, or SSO) provider
 or another SAML login provider.
