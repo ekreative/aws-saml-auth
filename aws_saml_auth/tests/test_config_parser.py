@@ -29,28 +29,6 @@ class TestProfileProcessing(unittest.TestCase):
         self.assertEqual("profile", config.profile)
 
 
-class TestUsernameProcessing(unittest.TestCase):
-    def test_default(self):
-        args = parse_args([])
-        config = resolve_config(args)
-        self.assertEqual(None, config.username)
-
-    def test_cli_param_supplied(self):
-        args = parse_args(["-u", "user@gmail.com"])
-        config = resolve_config(args)
-        self.assertEqual("user@gmail.com", config.username)
-
-    @mock.patch.dict(os.environ, {"GOOGLE_USERNAME": "override@gmail.com"})
-    def test_with_environment(self):
-        args = parse_args([])
-        config = resolve_config(args)
-        self.assertEqual("override@gmail.com", config.username)
-
-        args = parse_args(["-u", "user@gmail.com"])
-        config = resolve_config(args)
-        self.assertEqual("user@gmail.com", config.username)
-
-
 class TestDurationProcessing(unittest.TestCase):
     def test_default(self):
         args = parse_args([])
@@ -79,48 +57,26 @@ class TestDurationProcessing(unittest.TestCase):
         self.assertEqual(500, config.duration)
 
 
-class TestIDPProcessing(unittest.TestCase):
+class TestLoginUrlProcessing(unittest.TestCase):
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)
-        self.assertEqual(None, config.idp_id)
+        self.assertEqual(None, config.login_url)
 
     def test_cli_param_supplied(self):
-        args = parse_args(["-I", "kjl2342"])
+        args = parse_args(["-L", "kjl2342"])
         config = resolve_config(args)
-        self.assertEqual("kjl2342", config.idp_id)
+        self.assertEqual("kjl2342", config.login_url)
 
-    @mock.patch.dict(os.environ, {"GOOGLE_IDP_ID": "adsfasf233423"})
+    @mock.patch.dict(os.environ, {"ASA_LOGIN_URL": "adsfasf233423"})
     def test_with_environment(self):
         args = parse_args([])
         config = resolve_config(args)
-        self.assertEqual("adsfasf233423", config.idp_id)
+        self.assertEqual("adsfasf233423", config.login_url)
 
-        args = parse_args(["-I", "kjl2342"])
+        args = parse_args(["-L", "kjl2342"])
         config = resolve_config(args)
-        self.assertEqual("kjl2342", config.idp_id)
-
-
-class TestSPProcessing(unittest.TestCase):
-    def test_default(self):
-        args = parse_args([])
-        config = resolve_config(args)
-        self.assertEqual(None, config.sp_id)
-
-    def test_cli_param_supplied(self):
-        args = parse_args(["-S", "kjl2342"])
-        config = resolve_config(args)
-        self.assertEqual("kjl2342", config.sp_id)
-
-    @mock.patch.dict(os.environ, {"GOOGLE_SP_ID": "adsfasf233423"})
-    def test_with_environment(self):
-        args = parse_args([])
-        config = resolve_config(args)
-        self.assertEqual("adsfasf233423", config.sp_id)
-
-        args = parse_args(["-S", "kjl2342"])
-        config = resolve_config(args)
-        self.assertEqual("kjl2342", config.sp_id)
+        self.assertEqual("kjl2342", config.login_url)
 
 
 class TestRegionProcessing(unittest.TestCase):
@@ -157,7 +113,7 @@ class TestRoleProcessing(unittest.TestCase):
         config = resolve_config(args)
         self.assertEqual("role1234", config.role_arn)
 
-    @mock.patch.dict(os.environ, {"AWS_ROLE_ARN": "4567-role"})
+    @mock.patch.dict(os.environ, {"ASA_ROLE_ARN": "4567-role"})
     def test_with_environment(self):
         args = parse_args([])
         config = resolve_config(args)
@@ -176,68 +132,30 @@ class TestAskRoleProcessing(unittest.TestCase):
         self.assertTrue(config.ask_role)
 
     @nottest
-    @mock.patch.dict(os.environ, {"AWS_ASK_ROLE": "true"})
+    @mock.patch.dict(os.environ, {"ASA_ASK_ROLE": "true"})
     def test_with_environment(self):
         args = parse_args([])
         config = resolve_config(args)
         self.assertTrue(config.ask_role)
 
 
-class TestU2FDisabledProcessing(unittest.TestCase):
-    def test_default(self):
-        args = parse_args([])
-        config = resolve_config(args)
-        self.assertFalse(config.u2f_disabled)
-
-    def test_cli_param_supplied(self):
-        args = parse_args(["-D"])
-        config = resolve_config(args)
-        self.assertTrue(config.u2f_disabled)
-
-    @nottest
-    @mock.patch.dict(os.environ, {"U2F_DISABLED": "true"})
-    def test_with_environment(self):
-        args = parse_args([])
-        config = resolve_config(args)
-        self.assertTrue(config.u2f_disabled)
-
-
 class TestResolveAliasesProcessing(unittest.TestCase):
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)
-        self.assertFalse(config.resolve_aliases)
+        self.assertTrue(config.resolve_aliases)
 
     def test_cli_param_supplied(self):
-        args = parse_args(["--resolve-aliases"])
-        config = resolve_config(args)
-        self.assertTrue(config.resolve_aliases)
-
-    @nottest
-    @mock.patch.dict(os.environ, {"RESOLVE_AWS_ALIASES": "true"})
-    def test_with_environment(self):
-        args = parse_args([])
-        config = resolve_config(args)
-        self.assertTrue(config.resolve_aliases)
-
-
-class TestBgResponseProcessing(unittest.TestCase):
-    def test_default(self):
-        args = parse_args([])
+        args = parse_args(["--no-resolve-aliases"])
         config = resolve_config(args)
         self.assertFalse(config.resolve_aliases)
 
-    def test_cli_param_supplied(self):
-        args = parse_args(["--bg-response=foo"])
-        config = resolve_config(args)
-        self.assertEqual(config.bg_response, "foo")
-
     @nottest
-    @mock.patch.dict(os.environ, {"GOOGLE_BG_RESPONSE": "foo"})
+    @mock.patch.dict(os.environ, {"ASA_NO_RESOLVE_AWS_ALIASES": "true"})
     def test_with_environment(self):
         args = parse_args([])
         config = resolve_config(args)
-        self.assertEqual(config.bg_response, "foo")
+        self.assertFalse(config.resolve_aliases)
 
 
 class TestAccountProcessing(unittest.TestCase):
@@ -252,7 +170,7 @@ class TestAccountProcessing(unittest.TestCase):
         config = resolve_config(args)
         self.assertEqual("123456789012", config.account)
 
-    @mock.patch.dict(os.environ, {"AWS_ACCOUNT": "123456789012"})
+    @mock.patch.dict(os.environ, {"ASA_AWS_ACCOUNT": "123456789012"})
     def test_with_environment(self):
         args = parse_args([])
         config = resolve_config(args)
