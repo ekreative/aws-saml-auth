@@ -17,9 +17,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-version = {}
-with open(path.join(here, 'aws_saml_auth/_version.py')) as fp:
-    exec(fp.read(), version)
+version = "0.1.0"
 
 setup(
     name='aws-saml-auth',
@@ -27,16 +25,15 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version=version['__version__'],
+    version=version,
 
-    description='Acquire AWS STS (temporary) credentials via Google Apps '
-                'SAML Single Sign On',
+    description='Acquire AWS STS (temporary) credentials via SAML',
     long_description=long_description,
 
     # The project's main homepage.
     url='https://github.com/ekreative/aws-saml-auth',
 
-    download_url='https://github.com/ekreative/aws-saml-auth/archive/%s.tar.gz' % version['__version__'],
+    download_url='https://github.com/ekreative/aws-saml-auth/archive/%s.tar.gz' % version,
 
     # Author details
     author='Fred Cox',

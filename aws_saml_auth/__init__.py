@@ -10,7 +10,6 @@ import logging
 from six import print_ as print
 from tzlocal import get_localzone
 
-from aws_saml_auth import _version
 from aws_saml_auth import amazon
 from aws_saml_auth import configuration
 from aws_saml_auth import saml
@@ -106,7 +105,7 @@ def parse_args(args):
         "-V",
         "--version",
         action="version",
-        version="%(prog)s {version}".format(version=_version.__version__),
+        version="%(prog)s {version}".format(version="0.1.0"),
     )
 
     return parser.parse_args(args)
