@@ -15,6 +15,8 @@ from aws_saml_auth import configuration
 from aws_saml_auth import saml
 from aws_saml_auth import util
 
+with open(os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'VERSION'), encoding='utf-8') as version_file:
+    version = version_file.read().strip()
 
 def parse_args(args):
     parser = argparse.ArgumentParser(
@@ -105,7 +107,7 @@ def parse_args(args):
         "-V",
         "--version",
         action="version",
-        version="%(prog)s {version}".format(version="0.1.0"),
+        version="%(prog)s {version}".format(version=version),
     )
 
     return parser.parse_args(args)

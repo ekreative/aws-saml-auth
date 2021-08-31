@@ -17,7 +17,8 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-version = "0.1.0"
+with open(path.join(here, 'VERSION'), encoding='utf-8') as version_file:
+    version = version_file.read().strip()
 
 setup(
     name='aws-saml-auth',
