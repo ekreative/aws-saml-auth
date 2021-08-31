@@ -1,15 +1,11 @@
 aws-saml-auth
 =============
 
-|github-badge| |docker-badge| |pypi-badge| |coveralls-badge|
+|github-badge| |pypi-badge|
 
 .. |github-badge| image:: https://github.com/ekreative/aws-saml-auth/workflows/Python%20package/badge.svg
    :target: https://github.com/ekreative/aws-saml-auth/actions
    :alt: GitHub build badge
-
-.. |docker-badge| image:: https://img.shields.io/docker/build/ekreative/aws-saml-auth.svg
-   :target: https://hub.docker.com/r/ekreative/aws-saml-auth/
-   :alt: Docker build status badge
 
 .. |pypi-badge| image:: https://img.shields.io/pypi/v/aws-saml-auth.svg
    :target: https://pypi.python.org/pypi/aws-saml-auth/
@@ -187,11 +183,11 @@ Credential Process
 
 In you aws config file you can setup a profile to use the credential process
 
-```ini
-[profile sts]
-credential_process = aws-saml-auth --credential-process
-region = eu-west-1
-```
+.. code:: ini
+
+    [profile sts]
+    credential_process = aws-saml-auth --credential-process
+    region = eu-west-1
 
 Optionally add the `--role-arn` flag, this will allow you to have multiple profiles with different roles.
 
