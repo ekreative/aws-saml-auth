@@ -4,10 +4,9 @@ COPY setup.py README.rst requirements.txt /build/
 
 RUN apk add --no-cache libxml2 libxslt musl \
     && apk add --no-cache --virtual .build-deps g++ gcc libxml2-dev libxslt-dev \
-    && pip install --no-cache-dir -r /build/requirements.txt \
+    && pip install --no-cache-dir -e /build/ \
     && apk del .build-deps
 
 COPY aws_saml_auth /build/aws_saml_auth
-RUN pip install --no-cache-dir -e /build/
 
 ENTRYPOINT ["aws-saml-auth"]
