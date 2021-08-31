@@ -46,7 +46,7 @@ class TestDurationProcessing(unittest.TestCase):
             args = parse_args(["-d", "blart"])
             resolve_config(args)
 
-    @mock.patch.dict(os.environ, {"DURATION": "3000"})
+    @mock.patch.dict(os.environ, {"ASA_DURATION": "3000"})
     def test_with_environment(self):
         args = parse_args([])
         config = resolve_config(args)
@@ -124,7 +124,7 @@ class TestAskRoleProcessing(unittest.TestCase):
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)
-        self.assertFalse(config.ask_role)
+        self.assertTrue(config.ask_role)
 
     def test_cli_param_supplied(self):
         args = parse_args(["-a"])

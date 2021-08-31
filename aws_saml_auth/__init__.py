@@ -197,7 +197,7 @@ def resolve_config(args):
 
     # Region (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.region = coalesce(
-        args.region, os.getenv("ASA_AWS_DEFAULT_REGION"), config.region
+        args.region, os.getenv("AWS_DEFAULT_REGION"), config.region
     )
 
     # ROLE ARN (Option priority = ARGS, ENV_VAR, DEFAULT)
