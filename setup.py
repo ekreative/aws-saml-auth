@@ -62,7 +62,7 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-
+        'Programming Language :: Python :: 3.9',
     ],
 
     # What does your project relate to?
