@@ -1,6 +1,6 @@
 FROM python:3-alpine
 
-COPY setup.py README.rst requirements.txt /build/
+COPY setup.py README.rst VERSION /build/
 
 RUN apk add --no-cache libxml2 libxslt musl \
     && apk add --no-cache --virtual .build-deps g++ gcc libxml2-dev libxslt-dev \

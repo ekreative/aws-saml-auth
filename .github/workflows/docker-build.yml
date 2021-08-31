@@ -1,4 +1,4 @@
-name: CI to Docker Hub
+name: Docker Build
 
 on:
   push:
@@ -14,9 +14,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-
       - name: Check Out Repo
         uses: actions/checkout@v2
+
+      - name: Set version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          echo "${GITHUB_REF#refs/tags/v}" >VERSION
+          cat VERSION
 
       - name: Cache Docker layers
         uses: actions/cache@v2
