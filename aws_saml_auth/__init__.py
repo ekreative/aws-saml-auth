@@ -16,9 +16,7 @@ from aws_saml_auth import saml
 from aws_saml_auth import util
 
 with open(
-    os.path.join(
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..")), "VERSION"
-    ),
+    os.path.join(os.path.abspath(os.path.dirname(__file__)), "VERSION"),
     encoding="utf-8",
 ) as version_file:
     version = version_file.read().strip()
