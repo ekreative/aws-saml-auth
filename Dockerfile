@@ -8,6 +8,6 @@ RUN apk add --no-cache libxml2 libxslt musl \
     && pip install --no-cache-dir -e /build/ \
     && apk del .build-deps
 
-COPY aws_saml_auth /build/aws_saml_auth
+COPY aws_saml_auth/ /build/aws_saml_auth/
 
 ENTRYPOINT ["aws-saml-auth"]

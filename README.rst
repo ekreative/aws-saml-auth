@@ -15,63 +15,24 @@ This command-line tool allows you to acquire AWS temporary (STS)
 credentials using Google Workspace as a federated (Single Sign-On, or SSO) provider
 or another SAML login provider.
 
-Setup
------
 
-You'll first have to set up your SAML identity provider
-(IdP) for AWS. There are tasks to be performed on both the Google Workspace
-and the Amazon sides; these references should help you with those
-configurations:
+Installation
+------------
 
--  `How to Set Up Federated Single Sign-On to AWS Using Google
-   Apps <https://aws.amazon.com/blogs/security/how-to-set-up-federated-single-sign-on-to-aws-using-google-apps/>`__
--  `Using Google Apps SAML SSO to do one-click login to
-   AWS <https://blog.faisalmisle.com/2015/11/using-google-apps-saml-sso-to-do-one-click-login-to-aws/>`__
-
-If you need a fairly simple way to assign users to roles in AWS
-accounts, we have another tool called `Google AWS
-Federator <https://github.com/cevoaustralia/google-aws-federator>`__
-that might help you.
-
-To enable browser based login, you will need to host the redirect server
-somewhere with HTTPS enabled, you might use a serverless google cloud run deployment for example:
+The easiest option is to to install with ``pip``
 
 .. code:: shell
 
-    gcloud run deploy --image ekreative/aws-saml-auth --args=--redirect-server --platform managed
+    pip install aws-saml-auth
 
-Then change your SAML provider settings so the ``ACS URL`` points to the redirect server.
 
-You will also need to change the Trust Relationship of your IAM Role to allow ``SAML:aud``
-to be the host of your redirect server.
+Its also possible to use the docker image `ekreative/aws-saml-auth`_.
 
-See the example, replacing `"https://redirect-server.com/saml"` with your own.
+.. _`ekreative/aws-saml-auth`: https://hub.docker.com/r/ekreative/aws-saml-auth
 
-.. code:: json
 
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "Federated": "arn:aws:iam::XXX:saml-provider/XXX"
-          },
-          "Action": "sts:AssumeRoleWithSAML",
-          "Condition": {
-            "StringEquals": {
-              "SAML:aud": [
-                "https://signin.aws.amazon.com/saml",
-                "https://redirect-server.com/saml"
-              ]
-            }
-          }
-        }
-      ]
-    }
-
-Important Data
-~~~~~~~~~~~~~~
+Setup
+-----
 
 You will need to know your SAML Providers SSO URL.
 
@@ -85,47 +46,16 @@ You can store the url in an env var or pass it to the `--login-url` argument.
 
     export ASA_LOGIN_URL="https://accounts.google.com/o/saml2/initsso?idpid=XXX&spid=XXX&forceauthn=false"
 
-Installation
-------------
 
-You can install quite easily via ``pip``, if you want to have it on your
-local system:
+If you dont have an AWS SAML App available talk to your Administrator and point
+them to the `Setup AWS SAML and Google Workspace`_ section below.
 
-.. code:: shell
-
-    # For basic installation
-    localhost$ sudo pip install aws-saml-auth
-
-
-If you don't want to have the tool installed on your local system, or if
-you prefer to isolate changes, there is a Dockerfile provided, which you
-can build with:
-
-.. code:: shell
-
-    # Perform local build
-    localhost$ cd ..../aws-saml-auth && docker build -t aws-saml-auth .
-
-    # Use the Docker Hub version
-    localhost$ docker pull ekreative/aws-saml-auth
-
-Development
------------
-
-If you want to develop the Aws-saml-auth tool itself, we thank you! In order
-to help you get rolling, you'll want to install locally with pip. Of course,
-you can use your own regular workflow, with tools like `virtualenv <https://virtualenv.pypa.io/en/stable/>`__.
-
-.. code:: shell
-
-    # Install
-    pip install -e .
-
-We welcome you to review our `code of conduct <CODE_OF_CONDUCT.md>`__ and
-`contributing <CONTRIBUTING.md>`__ documents.
 
 Usage
 -----
+
+You can run the command ``aws-saml-auth`` to authenticate an aws-cli profile (default is 'sts').
+You can then export the variable ``AWS_PROFILE=sts`` and then aws-cli will use these credentials.
 
 .. code:: shell
 
@@ -165,37 +95,25 @@ Usage
       -V, --version         show program's version number and exit
 
 
-**Note** If you want a longer session than the AWS default 3600 seconds (1 hour)
-duration, you must also modify the IAM Role to permit this. See
-`the AWS documentation <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_manage_modify.html>`__
-for more information.
-
-Native Python
-~~~~~~~~~~~~~
-
-1. Execute ``aws-saml-auth``
-2. You will be prompted to supply each parameter
-
-*Note* You can skip prompts by either passing parameters to the command, or setting the specified Environment variables.
-
 Credential Process
-~~~~~~~~~~~~~~~~~~
+------------------
 
-In you aws config file you can setup a profile to use the credential process
+In you aws config file (``~/.aws/config``) you can setup a profile to use the credential process
 
 .. code:: ini
 
     [profile sts]
     credential_process = aws-saml-auth --credential-process
     region = eu-west-1
+    asa.login_url = https://accounts.google.com/o/saml2/initsso?idpid=some_idp&spid=some_spid&forceauthn=false
 
-Optionally add the `--role-arn` flag, this will allow you to have multiple profiles with different roles.
+If you have multiple roles available you must add the `asa.role_arn` setting. You can also use this to have multiple
+profiles with different AWS accounts.
 
-AWS process will trigger the login flow automatically. Unless you are passing or have a cached SAML response you must
-use the Browser login as there is no interactivity available.
+AWS process will trigger the login flow automatically whenever your credentials expire.
 
 Via Docker
-~~~~~~~~~~~~~
+----------
 
 1. Set environment variables for anything listed in Usage with ``($VARIABLE)`` after command line option:
 
@@ -214,6 +132,7 @@ You will be be shown a URL to visit in your browser
 If you have more than one role available to you (and you haven't set up ASA_ROLE_ARN),
 you'll be prompted to choose the role from a list.
 
+
 Storage of profile credentials
 ------------------------------
 
@@ -221,6 +140,84 @@ Through the use of AWS profiles, using the ``-p`` or ``--profile`` flag, the ``a
 
 When re-authenticating using the same profile, the values will be remembered to speed up the re-authentication process.
 This enables an approach that enables you to provide your Login URL value only once
+
+
+Setup AWS SAML and Google Workspace
+-----------------------------------
+
+You'll first have to set up your SAML identity provider
+(IdP) for AWS. There are tasks to be performed on both the Google Workspace
+and the Amazon sides; these references should help you with those
+configurations:
+
+-  `How to Set Up Federated Single Sign-On to AWS Using Google
+   Apps <https://aws.amazon.com/blogs/security/how-to-set-up-federated-single-sign-on-to-aws-using-google-apps/>`__
+-  `Using Google Apps SAML SSO to do one-click login to
+   AWS <https://blog.faisalmisle.com/2015/11/using-google-apps-saml-sso-to-do-one-click-login-to-aws/>`__
+
+If you need a fairly simple way to assign users to roles in AWS
+accounts, we have another tool called `Google AWS
+Federator <https://github.com/cevoaustralia/google-aws-federator>`__
+that might help you.
+
+**Note** If you want a longer session than the AWS default 3600 seconds (1 hour)
+duration, you must also modify the IAM Role to permit this. See
+`the AWS documentation <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_manage_modify.html>`__
+for more information.
+
+To enable browser based login, you will need to host the redirect server
+somewhere with HTTPS enabled, you might use a serverless google cloud run deployment for example:
+
+.. code:: shell
+
+    gcloud run deploy --image ekreative/aws-saml-auth --args=--redirect-server --platform managed
+
+Then change your SAML provider settings so the ``ACS URL`` points to the redirect server.
+
+You will also need to change the Trust Relationship of your IAM Role to allow ``SAML:aud``
+to be the host of your redirect server.
+
+See the example, replacing `"https://redirect-server.com/saml"` with your own.
+
+.. code:: json
+
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Federated": "arn:aws:iam::XXX:saml-provider/XXX"
+          },
+          "Action": "sts:AssumeRoleWithSAML",
+          "Condition": {
+            "StringEquals": {
+              "SAML:aud": [
+                "https://signin.aws.amazon.com/saml",
+                "https://redirect-server.com/saml"
+              ]
+            }
+          }
+        }
+      ]
+    }
+
+
+Development
+-----------
+
+If you want to develop the Aws-saml-auth tool itself, we thank you! In order
+to help you get rolling, you'll want to install locally with pip. Of course,
+you can use your own regular workflow, with tools like `virtualenv <https://virtualenv.pypa.io/en/stable/>`__.
+
+.. code:: shell
+
+    # Install
+    pip install -e .
+
+We welcome you to review our `code of conduct <CODE_OF_CONDUCT.md>`__ and
+`contributing <CONTRIBUTING.md>`__ documents.
+
 
 Acknowledgments
 ----------------
