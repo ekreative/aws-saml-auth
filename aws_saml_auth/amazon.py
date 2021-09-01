@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import base64
+import logging
+
 import boto3
 import os
 import re
@@ -10,6 +12,8 @@ from datetime import datetime
 from threading import Thread
 
 from botocore.exceptions import ClientError, ProfileNotFound
+import botocore
+import botocore.client
 from lxml import etree
 
 
@@ -156,7 +160,7 @@ class Amazon:
             try:
                 session = boto3.session.Session(region_name=self.config.region)
 
-                sts = session.client("sts")
+                sts = session.client("sts", config=botocore.client.Config(signature_version=botocore.UNSIGNED))
                 saml = sts.assume_role_with_saml(
                     RoleArn=role,
                     PrincipalArn=principal,
@@ -173,7 +177,8 @@ class Amazon:
                 response = iam.list_account_aliases()
                 account_alias = response["AccountAliases"][0]
                 aws_dict[role.split(":")[4]] = account_alias
-            except:
+            except Exception as err:
+                logging.debug("Failing to resolve alias %s", err)
                 aws_dict[role.split(":")[4]] = role.split(":")[4]
 
         threads = []
