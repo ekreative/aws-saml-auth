@@ -160,7 +160,10 @@ class Amazon:
             try:
                 session = boto3.session.Session(region_name=self.config.region)
 
-                sts = session.client("sts", config=botocore.client.Config(signature_version=botocore.UNSIGNED))
+                sts = session.client(
+                    "sts",
+                    config=botocore.client.Config(signature_version=botocore.UNSIGNED),
+                )
                 saml = sts.assume_role_with_saml(
                     RoleArn=role,
                     PrincipalArn=principal,
