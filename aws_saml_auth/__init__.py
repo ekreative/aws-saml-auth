@@ -186,7 +186,7 @@ def resolve_config(args):
 
     # Ask Role (Option priority = ARGS, ENV_VAR, DEFAULT)
     config.ask_role = (
-        args.ask_role or os.getenv("ASA_ASK_ROLE") != None or config.ask_role != None
+        args.ask_role or os.getenv("ASA_ASK_ROLE") != None or config.ask_role
     )
 
     # Duration (Option priority = ARGS, ENV_VAR, DEFAULT)
