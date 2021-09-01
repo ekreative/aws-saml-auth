@@ -124,7 +124,7 @@ class TestAskRoleProcessing(unittest.TestCase):
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)
-        self.assertTrue(config.ask_role)
+        self.assertFalse(config.ask_role)
 
     def test_cli_param_supplied(self):
         args = parse_args(["-a"])
