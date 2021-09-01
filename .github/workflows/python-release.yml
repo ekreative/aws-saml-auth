@@ -23,8 +23,8 @@ jobs:
 
     - name: Set version
       run: |
-        echo "${GITHUB_REF#refs/tags/v}" >VERSION
-        cat VERSION
+        echo "${GITHUB_REF#refs/tags/v}" >aws_saml_auth/VERSION
+        cat aws_saml_auth/VERSION
 
     - name: Build and publish
       env:
