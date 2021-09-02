@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-
 import unittest
 import mock
-
+from datetime import datetime
 from aws_saml_auth import amazon
 from aws_saml_auth import configuration
 from os import path
@@ -86,3 +85,17 @@ class TestAmazon(unittest.TestCase):
 
         self.assertEqual("xxx-xxxx", os.environ["AWS_PROFILE"])
         self.assertEqual("blart", os.environ["DEFAULT_AWS_PROFILE"])
+
+    @mock.patch.object(amazon.Amazon, "token", new_callable=mock.PropertyMock)
+    def test_print_credential_process(self, mock_token):
+        mock_token.return_value = {
+            "Credentials": {
+                "Expiration": datetime.now(),
+                "AccessKeyId": "some_id",
+                "SecretAccessKey": "some_secret",
+                "SessionToken": "some_token",
+            }
+        }
+
+        a = amazon.Amazon(self.valid_config, "dummy-encoded-saml")
+        a.print_credential_process()

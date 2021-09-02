@@ -16,9 +16,9 @@ class TestPythonFailOnVersion(unittest.TestCase):
 
         self.assertFalse(parser.redirect_server)
         self.assertEqual(parser.login_url, None)
-        self.assertTrue(parser.saml_cache)
+        self.assertTrue(parser.use_saml_cache)
         self.assertEqual(parser.saml_assertion, None)
-        self.assertFalse(parser.ask_role)
+        self.assertTrue(parser.ask_role)
         self.assertFalse(parser.print_creds)
         self.assertFalse(parser.credential_process)
         self.assertTrue(parser.resolve_aliases)
@@ -40,7 +40,7 @@ class TestPythonFailOnVersion(unittest.TestCase):
 
         parser = parse_args(["--no-saml-cache"])
 
-        self.assertFalse(parser.saml_cache)
+        self.assertFalse(parser.use_saml_cache)
 
     def test_resolvealiases(self):
 

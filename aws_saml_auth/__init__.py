@@ -55,7 +55,7 @@ def parse_args(args):
     parser.add_argument(
         "-p",
         "--profile",
-        help="AWS profile (defaults to value of $AWS_PROFILE, then falls back to 'sts')",
+        help="AWS profile (defaults to value of $AWS_PROFILE, then falls back to 'default')",
     )
     parser.add_argument(
         "-A", "--account", help="Filter for specific AWS account ($ASA_AWS_ACCOUNT)"
@@ -68,9 +68,9 @@ def parse_args(args):
     )
     parser.add_argument(
         "--no-saml-cache",
-        dest="saml_cache",
+        dest="use_saml_cache",
         action="store_false",
-        help="Do not cache the SAML Assertion",
+        help="Do not cache the SAML Assertion ($ASA_NO_SAML_CACHE=1)",
     )
     print_group = parser.add_mutually_exclusive_group()
     print_group.add_argument(
@@ -91,10 +91,10 @@ def parse_args(args):
 
     role_group = parser.add_mutually_exclusive_group()
     role_group.add_argument(
-        "-a",
-        "--ask-role",
-        action="store_true",
-        help="Set true to always pick the role ($ASA_ASK_ROLE=1)",
+        "--no-ask-role",
+        dest="ask_role",
+        action="store_false",
+        help="Never ask to pick the role ($ASA_NO_ASK_ROLE=1)",
     )
     role_group.add_argument(
         "-r", "--role-arn", help="The ARN of the role to assume ($ASA_ROLE_ARN)"
@@ -183,8 +183,17 @@ def resolve_config(args):
     config.read(config.profile)
 
     # Ask Role (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.ask_role = (
-        args.ask_role or os.getenv("ASA_ASK_ROLE") != None or config.ask_role
+    config.ask_role = coalesce(
+        (False if os.getenv("ASA_NO_ASK_ROLE") != None else None),
+        args.ask_role,
+        config.ask_role,
+    )
+
+    # Do not cache the SAML Assertion (Option priority = ARGS, ENV_VAR, DEFAULT)
+    config.use_saml_cache = coalesce(
+        (False if os.getenv("ASA_NO_SAML_CACHE") != None else None),
+        args.use_saml_cache,
+        config.use_saml_cache,
     )
 
     # Duration (Option priority = ARGS, ENV_VAR, DEFAULT)
@@ -211,9 +220,10 @@ def resolve_config(args):
     )
 
     # Resolve AWS aliases enabled (Option priority = ARGS, ENV_VAR, DEFAULT)
-    config.resolve_aliases = (
-        coalesce(args.resolve_aliases, config.resolve_aliases)
-        or os.getenv("ASA_NO_RESOLVE_ALIASES") != None
+    config.resolve_aliases = coalesce(
+        (False if os.getenv("ASA_NO_RESOLVE_ALIASES") != None else None),
+        args.resolve_aliases,
+        config.resolve_aliases,
     )
 
     # Account (Option priority = ARGS, ENV_VAR, DEFAULT)
@@ -236,7 +246,8 @@ def resolve_config(args):
         config.ask_role = False
         config.read_token_cache()
 
-    config.read_saml_cache()
+    if config.use_saml_cache:
+        config.read_saml_cache()
 
     return config
 
@@ -259,7 +270,7 @@ def process_auth(args, config):
         saml_xml = base64.b64decode(args.saml_assertion)
     elif config.token_cache:
         saml_xml = None
-    elif args.saml_cache and config.saml_cache:
+    elif config.saml_cache:
         saml_xml = config.saml_cache
         logging.info("%s: SAML cache found", __name__)
     else:
@@ -268,7 +279,7 @@ def process_auth(args, config):
 
     # We now have a new SAML value that can get cached (If the user asked
     # for it to be)
-    if args.saml_cache:
+    if config.use_saml_cache:
         config.saml_cache = saml_xml
 
     # The amazon_client now has the SAML assertion it needed (Either via the

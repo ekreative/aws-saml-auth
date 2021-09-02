@@ -54,14 +54,14 @@ them to the `Setup AWS SAML and Google Workspace`_ section below.
 Usage
 -----
 
-You can run the command ``aws-saml-auth`` to authenticate an aws-cli profile (default is 'sts').
-You can then export the variable ``AWS_PROFILE=sts`` and then aws-cli will use these credentials.
+You can run the command ``aws-saml-auth`` to authenticate aws-cli. By default it will edit your default credentials.
+You can export the variable ``AWS_PROFILE=my_profile`` and then ``aws-saml-auth`` and aws-cli will use this profile.
 
 .. code:: shell
 
     $ aws-saml-auth -h
     usage: aws-saml-auth [-h] [--redirect-server | -L LOGIN_URL] [-R REGION] [-d DURATION | --auto-duration] [-p PROFILE] [-A ACCOUNT] [-q] [--saml-assertion SAML_ASSERTION] [--no-saml-cache] [--print-creds | --credential-process]
-                     [--no-resolve-aliases] [--port PORT] [-a | -r ROLE_ARN] [-l {debug,info,warn}] [-V]
+                     [--no-resolve-aliases] [--port PORT] [--no-ask-role | -r ROLE_ARN] [-l {debug,info,warn}] [-V]
 
     Acquire temporary AWS credentials via SAML
 
@@ -76,18 +76,18 @@ You can then export the variable ``AWS_PROFILE=sts`` and then aws-cli will use t
                             Credential duration in seconds (defaults to value of $ASA_DURATION, then falls back to 43200)
       --auto-duration       Tries to use the longest allowed duration ($ASA_AUTO_DURATION=1)
       -p PROFILE, --profile PROFILE
-                            AWS profile (defaults to value of $AWS_PROFILE, then falls back to 'sts')
+                            AWS profile (defaults to value of $AWS_PROFILE, then falls back to 'default')
       -A ACCOUNT, --account ACCOUNT
                             Filter for specific AWS account ($ASA_AWS_ACCOUNT)
       -q, --quiet           Quiet output
       --saml-assertion SAML_ASSERTION
                             Base64 encoded SAML assertion to use
-      --no-saml-cache       Do not cache the SAML Assertion
+      --no-saml-cache       Do not cache the SAML Assertion ($ASA_NO_SAML_CACHE=1)
       --print-creds         Print Credentials
       --credential-process  Output suitable for aws cli credential_process ($ASA_CREDENTIAL_PROCESS=1)
       --no-resolve-aliases  Do not resolve AWS account aliases. ($ASA_NO_RESOLVE_ALIASES=1)
       --port PORT           Port for the redirect server ($PORT)
-      -a, --ask-role        Set true to always pick the role ($ASA_ASK_ROLE=1)
+      --no-ask-role         Never ask to pick the role ($ASA_NO_ASK_ROLE=1)
       -r ROLE_ARN, --role-arn ROLE_ARN
                             The ARN of the role to assume ($ASA_ROLE_ARN)
       -l {debug,info,warn}, --log {debug,info,warn}
@@ -102,7 +102,7 @@ In you aws config file (``~/.aws/config``) you can setup a profile to use the cr
 
 .. code:: ini
 
-    [profile sts]
+    [profile my_profile]
     credential_process = aws-saml-auth --credential-process
     region = eu-west-1
     asa.login_url = https://accounts.google.com/o/saml2/initsso?idpid=some_idp&spid=some_spid&forceauthn=false

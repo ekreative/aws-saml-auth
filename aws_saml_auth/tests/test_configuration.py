@@ -109,7 +109,7 @@ class TestConfigurationMethods(unittest.TestCase):
         c = configuration.Configuration()
         c.region = "sample_region"
         c.login_url = "samlple_login_url"
-        self.assertFalse(c.ask_role)
+        self.assertTrue(c.ask_role)
         c.raise_if_invalid()
 
     def test_login_url_invalid_values(self):
@@ -126,7 +126,7 @@ class TestConfigurationMethods(unittest.TestCase):
         c = configuration.Configuration()
         c.region = "sample_region"
         c.login_url = "sample_login_url"
-        self.assertEqual(c.profile, "sts")
+        self.assertEqual(c.profile, "default")
         c.raise_if_invalid()
 
     def test_profile_invalid_values(self):
@@ -154,7 +154,7 @@ class TestConfigurationMethods(unittest.TestCase):
         c = configuration.Configuration()
         c.region = "sample_region"
         c.login_url = "sample_login_url"
-        self.assertEqual(c.profile, "sts")
+        self.assertEqual(c.profile, "default")
         c.raise_if_invalid()
 
     def test_region_invalid_values(self):

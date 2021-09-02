@@ -11,7 +11,7 @@ class TestProfileProcessing(unittest.TestCase):
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)
-        self.assertEqual("sts", config.profile)
+        self.assertEqual("default", config.profile)
 
     def test_cli_param_supplied(self):
         args = parse_args(["-p", "profile"])
@@ -58,6 +58,7 @@ class TestDurationProcessing(unittest.TestCase):
 
 
 class TestLoginUrlProcessing(unittest.TestCase):
+    @mock.patch.dict(os.environ, {"AWS_PROFILE": "mytemp"})
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)
@@ -103,6 +104,7 @@ class TestRegionProcessing(unittest.TestCase):
 
 
 class TestRoleProcessing(unittest.TestCase):
+    @mock.patch.dict(os.environ, {"AWS_PROFILE": "mytemp"})
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)
@@ -124,12 +126,12 @@ class TestAskRoleProcessing(unittest.TestCase):
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)
-        self.assertFalse(config.ask_role)
+        self.assertTrue(config.ask_role)
 
     def test_cli_param_supplied(self):
-        args = parse_args(["-a"])
+        args = parse_args(["--no-ask-role"])
         config = resolve_config(args)
-        self.assertTrue(config.ask_role)
+        self.assertFalse(config.ask_role)
 
     @nottest
     @mock.patch.dict(os.environ, {"ASA_ASK_ROLE": "true"})

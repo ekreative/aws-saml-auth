@@ -77,13 +77,12 @@ class Amazon:
         return self.token["Credentials"]["Expiration"]
 
     def print_export_line(self):
-        export_template = "export AWS_ACCESS_KEY_ID='{}' AWS_SECRET_ACCESS_KEY='{}' AWS_SESSION_TOKEN='{}' AWS_SESSION_EXPIRATION='{}'"
+        export_template = "export AWS_ACCESS_KEY_ID='{}' AWS_SECRET_ACCESS_KEY='{}' AWS_SESSION_TOKEN='{}'"
 
         formatted = export_template.format(
             self.access_key_id,
             self.secret_access_key,
             self.session_token,
-            self.expiration.strftime("%Y-%m-%dT%H:%M:%S%z"),
         )
 
         print(formatted)
@@ -96,7 +95,7 @@ class Amazon:
                     "AccessKeyId": self.access_key_id,
                     "SecretAccessKey": self.secret_access_key,
                     "SessionToken": self.session_token,
-                    "Expiration": self.expiration.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                    "Expiration": self.expiration.isoformat(),
                 }
             )
         )

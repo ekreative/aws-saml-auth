@@ -24,13 +24,14 @@ class Configuration(object):
         self.__boto_session = botocore.session.Session()
 
         # Set up some defaults. These can be overridden as fit.
-        self.ask_role = False
+        self.ask_role = True
         self.duration = self.max_duration
         self.auto_duration = False
         self.login_url = None
-        self.profile = "sts"
+        self.profile = "default"
         self.region = None
         self.role_arn = None
+        self.use_saml_cache = True
         self.__saml_cache = None
         self.__token_cache = None
         self.resolve_aliases = True
@@ -249,7 +250,7 @@ class Configuration(object):
                     credentials_parser.set(
                         self.profile,
                         "aws_session_expiration",
-                        amazon_object.expiration.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                        amazon_object.expiration.isoformat(),
                     )
                     credentials_parser.set(
                         self.profile, "aws_session_token", amazon_object.session_token
@@ -298,7 +299,7 @@ class Configuration(object):
             credentials_parser.set(
                 self.profile,
                 "asa.aws_session_expiration",
-                amazon_object.expiration.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                amazon_object.expiration.isoformat(),
             )
             credentials_parser.set(
                 self.profile, "asa.aws_session_token", amazon_object.session_token
@@ -398,9 +399,7 @@ class Configuration(object):
                 credentials_parser[self.profile].get("asa.aws_session_expiration", None)
             )
             if read_expiration is not None:
-                token["Expiration"] = datetime.strptime(
-                    read_expiration, "%Y-%m-%dT%H:%M:%S%z"
-                ).replace(tzinfo=tz.UTC)
+                token["Expiration"] = datetime.fromisoformat(read_expiration)
             else:
                 token["Expiration"] = None
             self.__token_cache = token
