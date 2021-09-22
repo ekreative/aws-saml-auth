@@ -170,7 +170,15 @@ somewhere with HTTPS enabled, you might use a serverless google cloud run deploy
 
 .. code:: shell
 
-    gcloud run deploy --image ekreative/aws-saml-auth --args=--redirect-server --platform managed
+    gcloud run deploy --image gcr.io/my-project/aws-saml-auth --args=--redirect-server --platform managed
+
+Beware for google cloud run you must copy the docker image to your account:
+
+.. code:: shell
+
+    docker pull ekreative/aws-saml-auth
+    docker tag ekreative/aws-saml-auth gcr.io/my-project/aws-saml-auth
+    docker push gcr.io/my-project/aws-saml-auth
 
 Then change your SAML provider settings so the ``ACS URL`` points to the redirect server.
 
