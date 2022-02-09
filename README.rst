@@ -23,7 +23,7 @@ The easiest option is to to install with ``pip``
 
 .. code:: shell
 
-    pip install aws-saml-auth
+    python3 -m pip install aws-saml-auth
 
 
 Its also possible to use the docker image `ekreative/aws-saml-auth`_.
@@ -50,6 +50,22 @@ You can store the url in an env var or pass it to the `--login-url` argument.
 If you dont have an AWS SAML App available talk to your Administrator and point
 them to the `Setup AWS SAML and Google Workspace`_ section below.
 
+Credential Process
+------------------
+
+In you aws config file (``~/.aws/config``) you can setup a profile to use the credential process
+
+.. code:: ini
+
+    [profile my_profile]
+    credential_process = aws-saml-auth --credential-process
+    region = eu-west-1
+    asa.login_url = https://accounts.google.com/o/saml2/initsso?idpid=some_idp&spid=some_spid&forceauthn=false
+
+If you have multiple roles available you must add the `asa.role_arn` setting. You can also use this to have multiple
+profiles with different AWS accounts.
+
+AWS process will trigger the login flow automatically whenever your credentials expire.
 
 Usage
 -----
@@ -94,23 +110,6 @@ You can export the variable ``AWS_PROFILE=my_profile`` and then ``aws-saml-auth`
                             Select log level (default: warn)
       -V, --version         show program's version number and exit
 
-
-Credential Process
-------------------
-
-In you aws config file (``~/.aws/config``) you can setup a profile to use the credential process
-
-.. code:: ini
-
-    [profile my_profile]
-    credential_process = aws-saml-auth --credential-process
-    region = eu-west-1
-    asa.login_url = https://accounts.google.com/o/saml2/initsso?idpid=some_idp&spid=some_spid&forceauthn=false
-
-If you have multiple roles available you must add the `asa.role_arn` setting. You can also use this to have multiple
-profiles with different AWS accounts.
-
-AWS process will trigger the login flow automatically whenever your credentials expire.
 
 Via Docker
 ----------
