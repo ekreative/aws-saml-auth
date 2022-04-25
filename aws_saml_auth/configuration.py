@@ -289,20 +289,20 @@ class Configuration(object):
             if not credentials_parser.has_section(self.profile):
                 credentials_parser.add_section(self.profile)
             credentials_parser.set(
-                self.profile, "asa.aws_access_key_id", amazon_object.access_key_id
+                self.profile, "aws_access_key_id", amazon_object.access_key_id
             )
             credentials_parser.set(
                 self.profile,
-                "asa.aws_secret_access_key",
+                "aws_secret_access_key",
                 amazon_object.secret_access_key,
             )
             credentials_parser.set(
                 self.profile,
-                "asa.aws_session_expiration",
+                "aws_session_expiration",
                 amazon_object.expiration.isoformat(),
             )
             credentials_parser.set(
-                self.profile, "asa.aws_session_token", amazon_object.session_token
+                self.profile, "aws_session_token", amazon_object.session_token
             )
 
             with open(self.credentials_file, "w+") as f:
@@ -387,16 +387,16 @@ class Configuration(object):
         if credentials_parser.has_section(self.profile):
             token = {}
             token["AccessKeyId"] = unicode_to_string(
-                credentials_parser[self.profile].get("asa.aws_access_key_id", None)
+                credentials_parser[self.profile].get("aws_access_key_id", None)
             )
             token["SecretAccessKey"] = unicode_to_string(
-                credentials_parser[self.profile].get("asa.aws_secret_access_key", None)
+                credentials_parser[self.profile].get("aws_secret_access_key", None)
             )
             token["SessionToken"] = unicode_to_string(
-                credentials_parser[self.profile].get("asa.aws_session_token", None)
+                credentials_parser[self.profile].get("aws_session_token", None)
             )
             read_expiration = unicode_to_string(
-                credentials_parser[self.profile].get("asa.aws_session_expiration", None)
+                credentials_parser[self.profile].get("aws_session_expiration", None)
             )
             if read_expiration is not None:
                 token["Expiration"] = datetime.fromisoformat(read_expiration)
