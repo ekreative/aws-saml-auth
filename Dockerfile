@@ -1,13 +1,17 @@
-FROM python:3-alpine
+FROM python:3.14-alpine
 
-COPY setup.py README.rst /build/
-COPY aws_saml_auth/VERSION /build/aws_saml_auth/VERSION
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-RUN apk add --no-cache libxml2 libxslt musl \
-    && apk add --no-cache --virtual .build-deps g++ gcc libxml2-dev libxslt-dev \
-    && pip install --no-cache-dir -e /build/ \
-    && apk del .build-deps
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
+    PATH="/build/.venv/bin:$PATH"
 
-COPY aws_saml_auth/ /build/aws_saml_auth/
+WORKDIR /build
+
+COPY pyproject.toml uv.lock README.rst ./
+COPY aws_saml_auth/ ./aws_saml_auth/
+
+RUN uv sync --locked --no-dev --no-editable
 
 ENTRYPOINT ["aws-saml-auth"]

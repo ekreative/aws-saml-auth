@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import unittest
 
 from aws_saml_auth import configuration

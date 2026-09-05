@@ -1,0 +1,62 @@
+[project]
+name = "aws-saml-auth"
+description = "Acquire AWS STS (temporary) credentials via SAML"
+readme = "README.rst"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+authors = [{ name = "Fred Cox", email = "fred@ekreative.com" }]
+keywords = ["saml", "sso", "federated", "identity", "google", "aws", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Topic :: Security",
+    "Topic :: System :: Systems Administration :: Authentication/Directory",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dynamic = ["version"]
+dependencies = [
+    "boto3",
+    "filelock",
+    "lxml",
+    "tabulate",
+    "tzlocal",
+]
+
+[project.urls]
+Homepage = "https://github.com/ekreative/aws-saml-auth"
+Issues = "https://github.com/ekreative/aws-saml-auth/issues"
+
+[project.scripts]
+aws-saml-auth = "aws_saml_auth:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.14",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# The release workflow overwrites this file with the pushed git tag
+[tool.hatch.version]
+path = "aws_saml_auth/VERSION"
+pattern = "^(?P<version>.+)$"
+
+[tool.hatch.build.targets.wheel]
+packages = ["aws_saml_auth"]
+exclude = ["tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["aws_saml_auth/tests"]
+
+[tool.ruff.lint]
+ignore = [
+    # Falling back on any failure is deliberate in both places it is used
+    "BLE001",
+]

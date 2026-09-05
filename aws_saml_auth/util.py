@@ -1,16 +1,10 @@
-#!/usr/bin/env python
-
-from __future__ import print_function
-
-import getpass
 import os
-import sys
 from collections import OrderedDict
 from urllib.parse import parse_qs
-from cgi import parse_header, parse_multipart
 
-from six.moves import input
 from tabulate import tabulate
+
+FORM_URLENCODED = "application/x-www-form-urlencoded"
 
 
 class Util:
@@ -56,9 +50,7 @@ class Util:
                         headers=["No", "AWS account", "Role"],
                     )
                 )
-                prompt = "Type the number (1 - {:d}) of the role to assume: ".format(
-                    len(enriched_roles)
-                )
+                prompt = f"Type the number (1 - {len(enriched_roles):d}) of the role to assume: "
                 choice = Util.get_input(prompt)
 
                 try:
@@ -68,11 +60,9 @@ class Util:
         else:
             while True:
                 for i, role in enumerate(filtered_roles):
-                    print("[{:>3d}] {}".format(i + 1, role))
+                    print(f"[{i + 1:>3d}] {role}")
 
-                prompt = "Type the number (1 - {:d}) of the role to assume: ".format(
-                    len(filtered_roles)
-                )
+                prompt = f"Type the number (1 - {len(filtered_roles):d}) of the role to assume: "
                 choice = Util.get_input(prompt)
 
                 try:
@@ -99,25 +89,14 @@ class Util:
                 return value
         return None
 
-    @staticmethod
-    def unicode_to_string_if_needed(object):
-        if "unicode" in str(object.__class__):
-            return object.encode("utf-8")
-        else:
-            return object
-
+    # The SAML HTTP-POST binding always submits a form encoded body, anything
+    # else is not a SAML response and is ignored.
     @staticmethod
     def parse_post(handler):
-        if "content-type" not in handler.headers:
+        content_type = handler.headers.get("content-type", "")
+        if content_type.split(";")[0].strip().lower() != FORM_URLENCODED:
             return {}
-        ctype, pdict = parse_header(handler.headers["content-type"])
-        if ctype == "multipart/form-data":
-            postvars = parse_multipart(handler.rfile, pdict)
-        elif ctype == "application/x-www-form-urlencoded":
-            length = int(handler.headers["content-length"])
-            postvars = parse_qs(
-                handler.rfile.read(length).decode("utf-8"), keep_blank_values=1
-            )
-        else:
-            postvars = {}
-        return postvars
+        length = int(handler.headers.get("content-length", 0))
+        return parse_qs(
+            handler.rfile.read(length).decode("utf-8"), keep_blank_values=True
+        )

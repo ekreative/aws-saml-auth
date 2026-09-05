@@ -19,11 +19,19 @@ or another SAML login provider.
 Installation
 ------------
 
-The easiest option is to to install with ``pip``
+The easiest option is to to install with ``uv``
+
+.. code:: shell
+
+    uv tool install aws-saml-auth
+
+or with ``pip``
 
 .. code:: shell
 
     python3 -m pip install aws-saml-auth
+
+Python 3.12 or newer is required.
 
 
 Its also possible to use the docker image `ekreative/aws-saml-auth`_.
@@ -213,14 +221,35 @@ See the example, replacing `"https://redirect-server.com/saml"` with your own.
 Development
 -----------
 
-If you want to develop the Aws-saml-auth tool itself, we thank you! In order
-to help you get rolling, you'll want to install locally with pip. Of course,
-you can use your own regular workflow, with tools like `virtualenv <https://virtualenv.pypa.io/en/stable/>`__.
+If you want to develop the Aws-saml-auth tool itself, we thank you! The project
+uses `uv <https://docs.astral.sh/uv/>`__, which manages the virtualenv and the
+locked dependencies for you.
 
 .. code:: shell
 
-    # Install
-    pip install -e .
+    # Create the virtualenv and install everything, including dev dependencies
+    uv sync
+
+    # Run the tool from the checkout
+    uv run aws-saml-auth --help
+
+    # Run the tests
+    uv run pytest
+
+    # Format and lint
+    uv run ruff format
+    uv run ruff check
+
+If you use `direnv <https://direnv.net/>`__, an ``.envrc`` of
+
+.. code:: shell
+
+    watch_file pyproject.toml uv.lock
+    uv sync
+    export VIRTUAL_ENV="$PWD/.venv"
+    PATH_add "$PWD/.venv/bin"
+
+keeps the environment in sync and on your ``PATH`` when you enter the directory.
 
 We welcome you to review our `code of conduct <CODE_OF_CONDUCT.md>`__ and
 `contributing <CONTRIBUTING.md>`__ documents.

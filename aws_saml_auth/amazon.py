@@ -1,25 +1,23 @@
-#!/usr/bin/env python
-
 import base64
+import json
 import logging
-
-import boto3
 import os
 import re
-import json
-
-from datetime import datetime
+from datetime import UTC, datetime
 from threading import Thread
 
-from botocore.exceptions import ClientError, ProfileNotFound
+import boto3
 import botocore
 import botocore.client
+from botocore.exceptions import ClientError, ProfileNotFound
 from lxml import etree
+
+logger = logging.getLogger(__name__)
 
 
 class ExpectedAmazonException(Exception):
     def __init__(self, *args):
-        super(ExpectedAmazonException, self).__init__(*args)
+        super().__init__(*args)
 
 
 class Amazon:
@@ -43,7 +41,7 @@ class Amazon:
                 os.environ["AWS_PROFILE"] = profile
             return client
         except ProfileNotFound as ex:
-            raise ExpectedAmazonException("Error : {}.".format(ex))
+            raise ExpectedAmazonException(f"Error : {ex}.")
 
     @property
     def base64_encoded_saml(self):
@@ -127,7 +125,7 @@ class Amazon:
         if self.config.auto_duration and auto_duration:
             sts_call_vars["DurationSeconds"] = self.config.max_duration
             try:
-                res = self.sts_client.assume_role_with_saml(**sts_call_vars)
+                return self.sts_client.assume_role_with_saml(**sts_call_vars)
             except ClientError as err:
                 if err.response.get("Error", []).get(
                     "Code"
@@ -150,9 +148,7 @@ class Amazon:
         elif duration:
             sts_call_vars["DurationSeconds"] = duration
 
-        res = self.sts_client.assume_role_with_saml(**sts_call_vars)
-
-        return res
+        return self.sts_client.assume_role_with_saml(**sts_call_vars)
 
     def resolve_aws_aliases(self, roles):
         def resolve_aws_alias(role, principal, aws_dict):
@@ -180,7 +176,7 @@ class Amazon:
                 account_alias = response["AccountAliases"][0]
                 aws_dict[role.split(":")[4]] = account_alias
             except Exception as err:
-                logging.debug("Failing to resolve alias %s", err)
+                logger.debug("Failing to resolve alias %s", err)
                 aws_dict[role.split(":")[4]] = role.split(":")[4]
 
         threads = []
@@ -195,6 +191,14 @@ class Amazon:
 
         return aws_id_alias
 
+    # SAML timestamps are UTC, but not every provider marks them as such
+    @staticmethod
+    def parse_saml_datetime(value):
+        parsed = datetime.fromisoformat(value)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=UTC)
+        return parsed
+
     @staticmethod
     def is_valid_saml_assertion(saml_xml):
         if saml_xml is None:
@@ -205,18 +209,13 @@ class Amazon:
             conditions = list(
                 doc.iter(tag="{urn:oasis:names:tc:SAML:2.0:assertion}Conditions")
             )
-            not_before_str = conditions[0].get("NotBefore")
-            not_on_or_after_str = conditions[0].get("NotOnOrAfter")
 
-            now = datetime.utcnow()
-            not_before = datetime.strptime(not_before_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-            not_on_or_after = datetime.strptime(
-                not_on_or_after_str, "%Y-%m-%dT%H:%M:%S.%fZ"
+            now = datetime.now(UTC)
+            not_before = Amazon.parse_saml_datetime(conditions[0].get("NotBefore"))
+            not_on_or_after = Amazon.parse_saml_datetime(
+                conditions[0].get("NotOnOrAfter")
             )
 
-            if not_before <= now < not_on_or_after:
-                return True
-            else:
-                return False
+            return not_before <= now < not_on_or_after
         except Exception:
             return False

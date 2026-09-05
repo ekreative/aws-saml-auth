@@ -1,10 +1,11 @@
-#!/usr/bin/env python
 """
 This HTTP server can be run on a server, and redirects the SAMLResponse to 127.0.0.1 so the command can capture it
 """
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+logger = logging.getLogger(__name__)
 
 
 class RedirectServerHandler(BaseHTTPRequestHandler):
@@ -18,10 +19,10 @@ def start_redirect_server(port):
     logging.basicConfig(level=logging.INFO)
     server_address = ("", port)
     httpd = HTTPServer(server_address, RedirectServerHandler)
-    logging.info("Starting http redirect server on: %s", port)
+    logger.info("Starting http redirect server on: %s", port)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         pass
     httpd.server_close()
-    logging.info("Stopping http redirect server")
+    logger.info("Stopping http redirect server")

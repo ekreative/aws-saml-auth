@@ -5,6 +5,6 @@
 dist
 build/
 .idea/
-Pipfile
-Pipfile.lock
-venv/*
+.direnv/
+.ruff_cache/
+.venv/

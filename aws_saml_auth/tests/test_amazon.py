@@ -1,11 +1,10 @@
-#!/usr/bin/env python
-import unittest
-import mock
-from datetime import datetime
-from aws_saml_auth import amazon
-from aws_saml_auth import configuration
-from os import path
 import os
+import unittest
+from datetime import UTC, datetime
+from os import path
+from unittest import mock
+
+from aws_saml_auth import amazon, configuration
 
 
 class TestAmazon(unittest.TestCase):
@@ -36,7 +35,7 @@ class TestAmazon(unittest.TestCase):
             "arn:aws:iam::123456789012:role/read-only",
             "arn:aws:iam::123456789012:role/test",
         ]
-        self.assertEqual(sorted(list(a.roles.keys())), sorted(list_of_testing_roles))
+        self.assertEqual(sorted(a.roles.keys()), sorted(list_of_testing_roles))
 
     def test_role_extraction_too_many_commas(self):
         # See https://github.com/cevoaustralia/aws-google-auth/issues/12
@@ -48,7 +47,7 @@ class TestAmazon(unittest.TestCase):
             "arn:aws:iam::123456789012:role/read-only",
             "arn:aws:iam::123456789012:role/test",
         ]
-        self.assertEqual(sorted(list(a.roles.keys())), sorted(list_of_testing_roles))
+        self.assertEqual(sorted(a.roles.keys()), sorted(list_of_testing_roles))
 
     def test_invalid_saml_too_soon(self):
         saml_xml = self.read_local_file("saml-response-too-soon.xml")
@@ -90,7 +89,7 @@ class TestAmazon(unittest.TestCase):
     def test_print_credential_process(self, mock_token):
         mock_token.return_value = {
             "Credentials": {
-                "Expiration": datetime.now(),
+                "Expiration": datetime.now(UTC),
                 "AccessKeyId": "some_id",
                 "SecretAccessKey": "some_secret",
                 "SessionToken": "some_token",

@@ -1,17 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import print_function
-
 import base64
 import logging
 import webbrowser
 
-from aws_saml_auth.login_server import LoginServerHandler, LoginServer
+from aws_saml_auth.login_server import LoginServer, LoginServerHandler
+
+logger = logging.getLogger(__name__)
 
 
 class ExpectedSamlException(Exception):
     def __init__(self, *args):
-        super(ExpectedSamlException, self).__init__(*args)
+        super().__init__(*args)
 
 
 class Saml:
@@ -26,7 +24,7 @@ class Saml:
         self.config = config
 
     def do_browser_saml(self):
-        logging.warning("Opening url %s", self.login_url)
+        logger.warning("Opening url %s", self.login_url)
         webbrowser.open(self.login_url)
         saml_text = self._catch_saml()
 
@@ -36,12 +34,12 @@ class Saml:
     def _catch_saml(port=4589):
         server_address = ("", port)
         httpd = LoginServer(server_address, LoginServerHandler)
-        logging.info("Starting http handler...\n")
+        logger.info("Starting http handler...\n")
         httpd.handle_request()
 
-        assert (
-            "SAMLResponse" in httpd.post_data
-        ), "Expected post data to contain SAMLResponse."
+        assert "SAMLResponse" in httpd.post_data, (
+            "Expected post data to contain SAMLResponse."
+        )
         return httpd.post_data["SAMLResponse"][0]
 
     @property

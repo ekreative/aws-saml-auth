@@ -1,10 +1,8 @@
 import os
 import unittest
+from unittest import mock
 
-import mock
-from nose.tools import nottest
-
-from aws_saml_auth import resolve_config, parse_args
+from aws_saml_auth import parse_args, resolve_config
 
 
 class TestProfileProcessing(unittest.TestCase):
@@ -81,7 +79,7 @@ class TestLoginUrlProcessing(unittest.TestCase):
 
 
 class TestRegionProcessing(unittest.TestCase):
-    @nottest
+    @unittest.skip("Depends on the developer's ~/.aws/config")
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)
@@ -133,7 +131,7 @@ class TestAskRoleProcessing(unittest.TestCase):
         config = resolve_config(args)
         self.assertFalse(config.ask_role)
 
-    @nottest
+    @unittest.skip("Depends on the developer's ~/.aws/config")
     @mock.patch.dict(os.environ, {"ASA_ASK_ROLE": "true"})
     def test_with_environment(self):
         args = parse_args([])
@@ -152,7 +150,7 @@ class TestResolveAliasesProcessing(unittest.TestCase):
         config = resolve_config(args)
         self.assertFalse(config.resolve_aliases)
 
-    @nottest
+    @unittest.skip("Depends on the developer's ~/.aws/config")
     @mock.patch.dict(os.environ, {"ASA_NO_RESOLVE_AWS_ALIASES": "true"})
     def test_with_environment(self):
         args = parse_args([])
@@ -161,7 +159,7 @@ class TestResolveAliasesProcessing(unittest.TestCase):
 
 
 class TestAccountProcessing(unittest.TestCase):
-    @nottest
+    @unittest.skip("Depends on the developer's ~/.aws/config")
     def test_default(self):
         args = parse_args([])
         config = resolve_config(args)

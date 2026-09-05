@@ -1,9 +1,6 @@
-#!/usr/bin/env python
-
-import sys
+import io
 import unittest
-
-from mock import patch, MagicMock
+from types import SimpleNamespace
 
 from aws_saml_auth import util
 
@@ -40,28 +37,35 @@ class TestUtilMethods(unittest.TestCase):
             "test-01",
         )
 
-    def test_unicode_to_string_if_needed_python_3(self):
-        if sys.version_info >= (3, 0):
-            value_string = "Test String!"
-            self.assertIn("str", str(value_string.__class__))
-            self.assertEqual(
-                util.Util.unicode_to_string_if_needed(value_string), value_string
-            )
 
-    def test_unicode_to_string_if_needed_python_2(self):
-        if sys.version_info < (3, 0):
-            value_string = "Test String!"
-            value_unicode = value_string.decode("utf-8")
-            self.assertIn("str", str(value_string.__class__))
-            self.assertIn("unicode", str(value_unicode.__class__))
-            self.assertEqual(
-                util.Util.unicode_to_string_if_needed(value_unicode), value_string
-            )
-            self.assertEqual(
-                util.Util.unicode_to_string_if_needed(value_string), value_string
-            )
+class TestParsePost(unittest.TestCase):
+    @staticmethod
+    def handler(body, content_type=util.FORM_URLENCODED):
+        headers = {"content-length": str(len(body))}
+        if content_type is not None:
+            headers["content-type"] = content_type
+        return SimpleNamespace(headers=headers, rfile=io.BytesIO(body))
 
-    def test_unicode_to_string_if_needed(self):
-        self.assertEqual(util.Util.unicode_to_string_if_needed(None), None)
-        self.assertEqual(util.Util.unicode_to_string_if_needed(1234), 1234)
-        self.assertEqual(util.Util.unicode_to_string_if_needed("nop"), "nop")
+    def test_saml_response(self):
+        self.assertEqual(
+            util.Util.parse_post(self.handler(b"SAMLResponse=abc123&RelayState=")),
+            {"SAMLResponse": ["abc123"], "RelayState": [""]},
+        )
+
+    def test_content_type_with_charset(self):
+        self.assertEqual(
+            util.Util.parse_post(
+                self.handler(
+                    b"SAMLResponse=abc123",
+                    content_type="Application/X-WWW-Form-Urlencoded; charset=UTF-8",
+                )
+            ),
+            {"SAMLResponse": ["abc123"]},
+        )
+
+    def test_ignores_other_content_types(self):
+        self.assertEqual(
+            util.Util.parse_post(self.handler(b"{}", content_type="application/json")),
+            {},
+        )
+        self.assertEqual(util.Util.parse_post(self.handler(b"", content_type=None)), {})

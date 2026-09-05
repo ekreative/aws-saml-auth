@@ -1,24 +1,18 @@
-#!/usr/bin/env python
-
+import configparser
+import hashlib
+import logging
 import os
+from datetime import UTC, datetime
 
 import botocore.session
 import filelock
-import logging
-from datetime import datetime
-from dateutil import tz
-import hashlib
 
-try:
-    from backports import configparser
-except ImportError:
-    import configparser
+from aws_saml_auth import amazon, util
 
-from aws_saml_auth import util
-from aws_saml_auth import amazon
+logger = logging.getLogger(__name__)
 
 
-class Configuration(object):
+class Configuration:
     def __init__(self, **kwargs):
         self.options = {}
         self.__boto_session = botocore.session.Session()
@@ -50,7 +44,7 @@ class Configuration(object):
         if str(profile).lower() == "default":
             return profile
         else:
-            return "profile {}".format(str(profile))
+            return f"profile {profile!s}"
 
     @property
     def max_duration(self):
@@ -70,15 +64,12 @@ class Configuration(object):
 
     @property
     def saml_cache_file(self):
-        assert (
-            self.login_url is not None
-        ), "Cannot look for smal cache file if no login url"
-
-        return self.credentials_file.replace(
-            "credentials",
-            "saml_cache_%s.xml"
-            % hashlib.sha1(self.login_url.encode("utf-8")).hexdigest(),
+        assert self.login_url is not None, (
+            "Cannot look for smal cache file if no login url"
         )
+
+        digest = hashlib.sha1(self.login_url.encode("utf-8")).hexdigest()
+        return self.credentials_file.replace("credentials", f"saml_cache_{digest}.xml")
 
     def ensure_config_files_exist(self):
         for file in [self.config_file, self.credentials_file]:
@@ -94,7 +85,7 @@ class Configuration(object):
     @property
     def saml_cache(self):
         if not amazon.Amazon.is_valid_saml_assertion(self.__saml_cache):
-            logging.debug("%s: Invalid saml cache", __name__)
+            logger.debug("Invalid saml cache")
             self.__saml_cache = None
 
         return self.__saml_cache
@@ -106,15 +97,14 @@ class Configuration(object):
     # Will return a credential cache, ONLY if it's valid.
     @property
     def token_cache(self):
-        if self.__token_cache is not None:
-            if (
-                self.__token_cache["Expiration"] is None
-                or self.__token_cache["Expiration"] <= datetime.now(tz.UTC)
-                or self.__token_cache["AccessKeyId"] is None
-                or self.__token_cache["SecretAccessKey"] is None
-            ):
-                logging.debug("%s: Invalid token cache", __name__)
-                self.__token_cache = None
+        if self.__token_cache is not None and (
+            self.__token_cache["Expiration"] is None
+            or self.__token_cache["Expiration"] <= datetime.now(UTC)
+            or self.__token_cache["AccessKeyId"] is None
+            or self.__token_cache["SecretAccessKey"] is None
+        ):
+            logger.debug("Invalid token cache")
+            self.__token_cache = None
 
         return self.__token_cache
 
@@ -125,75 +115,65 @@ class Configuration(object):
     # configuration.
     def raise_if_invalid(self):
         # ask_role
-        assert (
-            self.ask_role.__class__ is bool
-        ), "Expected ask_role to be a boolean. Got {}.".format(self.ask_role.__class__)
+        assert self.ask_role.__class__ is bool, (
+            f"Expected ask_role to be a boolean. Got {self.ask_role.__class__}."
+        )
 
         # duration
-        assert (
-            self.duration.__class__ is int
-        ), "Expected duration to be an integer. Got {}.".format(self.duration.__class__)
-        assert (
-            self.duration >= 900
-        ), "Expected duration to be greater than or equal to 900. Got {}.".format(
-            self.duration
+        assert self.duration.__class__ is int, (
+            f"Expected duration to be an integer. Got {self.duration.__class__}."
         )
-        assert (
-            self.duration <= self.max_duration
-        ), "Expected duration to be less than or equal to max_duration ({}). Got {}.".format(
-            self.max_duration, self.duration
+        assert self.duration >= 900, (
+            f"Expected duration to be greater than or equal to 900. Got {self.duration}."
+        )
+        assert self.duration <= self.max_duration, (
+            f"Expected duration to be less than or equal to max_duration ({self.max_duration}). Got {self.duration}."
         )
 
         # auto_duration
-        assert (
-            self.auto_duration.__class__ is bool
-        ), "Expected auto_duration to be a boolean. Got {}.".format(
-            self.auto_duration.__class__
+        assert self.auto_duration.__class__ is bool, (
+            f"Expected auto_duration to be a boolean. Got {self.auto_duration.__class__}."
         )
 
         # profile
-        assert (
-            self.profile.__class__ is str
-        ), "Expected profile to be a string. Got {}.".format(self.profile.__class__)
+        assert self.profile.__class__ is str, (
+            f"Expected profile to be a string. Got {self.profile.__class__}."
+        )
 
         # region
-        assert (
-            self.region.__class__ is str
-        ), "Expected region to be a string. Got {}.".format(self.region.__class__)
+        assert self.region.__class__ is str, (
+            f"Expected region to be a string. Got {self.region.__class__}."
+        )
 
         # login_url
-        assert (
-            self.login_url is not None
-        ), "Expected login_url to be set to non-None value."
+        assert self.login_url is not None, (
+            "Expected login_url to be set to non-None value."
+        )
 
         # role_arn (Can be blank, we'll just prompt)
         if self.role_arn is not None:
-            assert (
-                self.role_arn.__class__ is str
-            ), "Expected role_arn to be None or a string. Got {}.".format(
-                self.role_arn.__class__
+            assert self.role_arn.__class__ is str, (
+                f"Expected role_arn to be None or a string. Got {self.role_arn.__class__}."
             )
             assert (
                 "arn:aws:iam::" in self.role_arn
                 or "arn:aws-us-gov:iam::" in self.role_arn
-            ), "Expected role_arn to contain 'arn:aws:iam::'. Got '{}'.".format(
-                self.role_arn
-            )
+            ), f"Expected role_arn to contain 'arn:aws:iam::'. Got '{self.role_arn}'."
 
         # quiet
-        assert (
-            self.quiet.__class__ is bool
-        ), "Expected quiet to be a boolean. Got {}.".format(self.quiet.__class__)
+        assert self.quiet.__class__ is bool, (
+            f"Expected quiet to be a boolean. Got {self.quiet.__class__}."
+        )
 
         # account
-        assert (
-            self.account.__class__ is str
-        ), "Expected account to be string. Got {}".format(self.account.__class__)
+        assert self.account.__class__ is str, (
+            f"Expected account to be string. Got {self.account.__class__}"
+        )
 
         # port
-        assert (
-            self.port.__class__ is int
-        ), "Expected port to be an integer. Got {}.".format(self.port.__class__)
+        assert self.port.__class__ is int, (
+            f"Expected port to be an integer. Got {self.port.__class__}."
+        )
 
     # Write the configuration (and credentials) out to disk. This allows for
     # regular AWS tooling (aws cli and boto) to use the credentials in the
@@ -201,9 +181,9 @@ class Configuration(object):
     def write(self, amazon_object):
         self.ensure_config_files_exist()
 
-        assert (
-            self.profile is not None
-        ), "Can not store config/credentials if the AWS_PROFILE is None."
+        assert self.profile is not None, (
+            "Can not store config/credentials if the AWS_PROFILE is None."
+        )
 
         config_file_lock = filelock.FileLock(self.config_file + ".lock")
         config_file_lock.acquire()
@@ -274,12 +254,12 @@ class Configuration(object):
                 saml_cache_file_lock.release()
 
     def write_token_cache(self, amazon_object):
-        assert (
-            self.profile is not None
-        ), "Can not store config/credentials if the AWS_PROFILE is None."
-        assert (
-            amazon_object is not None
-        ), "Can not store config/credentials if the amazon_object is None."
+        assert self.profile is not None, (
+            "Can not store config/credentials if the AWS_PROFILE is None."
+        )
+        assert amazon_object is not None, (
+            "Can not store config/credentials if the amazon_object is None."
+        )
 
         credentials_file_lock = filelock.FileLock(self.credentials_file + ".lock")
         credentials_file_lock.acquire()
@@ -320,7 +300,6 @@ class Configuration(object):
 
         # Shortening Convenience functions
         coalesce = util.Util.coalesce
-        unicode_to_string = util.Util.unicode_to_string_if_needed
 
         profile_string = Configuration.config_profile(profile)
         config_parser = configparser.RawConfigParser()
@@ -340,27 +319,19 @@ class Configuration(object):
             self.duration = coalesce(read_duration, self.duration)
 
             # Login URL
-            read_login_url = unicode_to_string(
-                config_parser[profile_string].get("asa.login_url", None)
-            )
+            read_login_url = config_parser[profile_string].get("asa.login_url", None)
             self.login_url = coalesce(read_login_url, self.login_url)
 
             # Region
-            read_region = unicode_to_string(
-                config_parser[profile_string].get("region", None)
-            )
+            read_region = config_parser[profile_string].get("region", None)
             self.region = coalesce(read_region, self.region)
 
             # Role ARN
-            read_role_arn = unicode_to_string(
-                config_parser[profile_string].get("asa.role_arn", None)
-            )
+            read_role_arn = config_parser[profile_string].get("asa.role_arn", None)
             self.role_arn = coalesce(read_role_arn, self.role_arn)
 
             # Account
-            read_account = unicode_to_string(
-                config_parser[profile_string].get("account", None)
-            )
+            read_account = config_parser[profile_string].get("account", None)
             self.account = coalesce(read_account, self.account)
 
     def read_saml_cache(self):
@@ -369,34 +340,30 @@ class Configuration(object):
         try:
             with open(self.saml_cache_file, "r") as f:
                 self.__saml_cache = f.read().encode("utf-8")
-        except IOError as ex:
-            logging.info("%s: SAML cache failed to read: %s", __name__, ex)
-            pass
+        except OSError as ex:
+            logger.info("SAML cache failed to read: %s", ex)
 
     def read_token_cache(self):
-        assert (
-            self.profile is not None
-        ), "Can not store config/credentials if the AWS_PROFILE is None."
-
-        # Shortening Convenience functions
-        unicode_to_string = util.Util.unicode_to_string_if_needed
+        assert self.profile is not None, (
+            "Can not store config/credentials if the AWS_PROFILE is None."
+        )
 
         credentials_parser = configparser.RawConfigParser()
         credentials_parser.read(self.credentials_file)
 
         if credentials_parser.has_section(self.profile):
             token = {}
-            token["AccessKeyId"] = unicode_to_string(
-                credentials_parser[self.profile].get("asa.aws_access_key_id", None)
+            token["AccessKeyId"] = credentials_parser[self.profile].get(
+                "asa.aws_access_key_id", None
             )
-            token["SecretAccessKey"] = unicode_to_string(
-                credentials_parser[self.profile].get("asa.aws_secret_access_key", None)
+            token["SecretAccessKey"] = credentials_parser[self.profile].get(
+                "asa.aws_secret_access_key", None
             )
-            token["SessionToken"] = unicode_to_string(
-                credentials_parser[self.profile].get("asa.aws_session_token", None)
+            token["SessionToken"] = credentials_parser[self.profile].get(
+                "asa.aws_session_token", None
             )
-            read_expiration = unicode_to_string(
-                credentials_parser[self.profile].get("asa.aws_session_expiration", None)
+            read_expiration = credentials_parser[self.profile].get(
+                "asa.aws_session_expiration", None
             )
             if read_expiration is not None:
                 token["Expiration"] = datetime.fromisoformat(read_expiration)

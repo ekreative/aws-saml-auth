@@ -1,19 +1,15 @@
-#!/usr/bin/env python
-from __future__ import print_function
-
 import argparse
 import base64
+import logging
 import os
 import sys
-import logging
 
-from six import print_ as print
 from tzlocal import get_localzone
 
-from aws_saml_auth import amazon
-from aws_saml_auth import configuration
-from aws_saml_auth import saml
-from aws_saml_auth import util
+from aws_saml_auth import amazon, configuration, saml, util
+
+logger = logging.getLogger(__name__)
+
 
 with open(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), "VERSION"),
@@ -111,36 +107,14 @@ def parse_args(args):
         "-V",
         "--version",
         action="version",
-        version="%(prog)s {version}".format(version=version),
+        version=f"%(prog)s {version}",
     )
 
     return parser.parse_args(args)
 
 
-def exit_if_unsupported_python():
-    if sys.version_info.major == 2 and sys.version_info.minor < 7:
-        logging.critical(
-            "%s requires Python 2.7 or higher. Please consider "
-            "upgrading. Support for Python 2.6 and lower was "
-            "dropped because this tool's dependencies dropped "
-            "support.",
-            __name__,
-        )
-        logging.critical(
-            "For debugging, it appears you're running: %s", sys.version_info
-        )
-        logging.critical(
-            "For more information, see: "
-            "https://github.com/cevoaustralia/aws-google-auth/"
-            "issues/41"
-        )
-        sys.exit(1)
-
-
 def cli(cli_args):
     try:
-        exit_if_unsupported_python()
-
         args = parse_args(args=cli_args)
 
         # Set up logging
@@ -162,8 +136,8 @@ def cli(cli_args):
         sys.exit(1)
     except KeyboardInterrupt:
         pass
-    except Exception as ex:
-        logging.exception(ex)
+    except Exception:
+        logger.exception("Unexpected error")
 
 
 def resolve_config(args):
@@ -255,11 +229,11 @@ def resolve_config(args):
 def process_auth(args, config):
     if config.region is None:
         config.region = util.Util.get_input("AWS Region: ")
-        logging.debug("%s: region is: %s", __name__, config.region)
+        logger.debug("region is: %s", config.region)
 
     if config.login_url is None:
         config.login_url = util.Util.get_input("Login URL: ")
-        logging.debug("%s: login url is: %s", __name__, config.login_url)
+        logger.debug("login url is: %s", config.login_url)
 
     # If there is a valid cache and the user opted to use it, use that instead
     # of prompting the user for input (it will also ignroe any set variables
@@ -272,7 +246,7 @@ def process_auth(args, config):
         saml_xml = None
     elif config.saml_cache:
         saml_xml = config.saml_cache
-        logging.info("%s: SAML cache found", __name__)
+        logger.info("SAML cache found")
     else:
         saml_client = saml.Saml(config)
         saml_xml = saml_client.do_browser_saml()
