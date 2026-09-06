@@ -8,6 +8,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Required to mint the PyPI trusted publishing token
+      id-token: write
     steps:
     - uses: actions/checkout@v4
 
@@ -23,7 +27,4 @@ jobs:
       run: uv build
 
     - name: Publish
-      env:
-        UV_PUBLISH_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        UV_PUBLISH_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: uv publish
+      run: uv publish --trusted-publishing always
