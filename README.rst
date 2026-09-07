@@ -151,10 +151,15 @@ and it waits for the assertion on two paths at once:
 * the browser reaching the login server, as usual
 * you pasting it, when the browser cannot
 
-After logging in your browser ends up on
-``http://127.0.0.1:4589/?SAMLResponse=...``. If that page fails to load, copy
-the whole url out of the address bar and paste it at the prompt. Pasting just
-the ``SAMLResponse`` value works too.
+After logging in the redirect server shows a page that sends your browser on
+to ``http://127.0.0.1:4589/?SAMLResponse=...``. If your browser will not go
+there, or goes there and cannot connect, that page also shows the assertion in
+a box to copy. Paste either the assertion or the whole url from the address bar
+at the prompt.
+
+Browsers increasingly refuse to navigate from a public https page to a private
+address like ``127.0.0.1``, so the copy and paste route is the reliable one
+whenever the command is not on the same machine as the browser.
 
 Publishing the port (``docker run -p 4589:4589 ...``) lets the browser reach
 the container directly, and then nothing needs pasting.
@@ -218,10 +223,11 @@ Beware for google cloud run you must copy the docker image to your account:
 
 Then change your SAML provider settings so the ``ACS URL`` points to the redirect server.
 
-The redirect server answers the ``ACS URL`` post with a 303 to
-``http://127.0.0.1:4589/?SAMLResponse=...``, so the assertion stays visible in
-the address bar for the paste fallback above. Clients older than 0.9.0 only
-accept the assertion as a post, so upgrade them alongside the redirect server.
+The redirect server answers the ``ACS URL`` post with a page that both sends
+the browser on to ``http://127.0.0.1:4589/?SAMLResponse=...`` and shows the
+assertion for copying, because a browser may refuse the first. Clients older
+than 0.9.0 only accept the assertion as a post, so upgrade them alongside the
+redirect server.
 
 You will also need to change the Trust Relationship of your IAM Role to allow ``SAML:aud``
 to be the host of your redirect server.

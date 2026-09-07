@@ -77,10 +77,11 @@ The flow, orchestrated by `cli()` → `resolve_config()` → `process_auth()` in
 - **`cli()` must exit non-zero on failure.** botocore only surfaces a credential process's stderr when it exits
   non-zero; on exit 0 it parses stdout and reports `Expecting value: line 1 column 1 (char 0)` instead of the
   real error.
-- **The redirect server 303s with the assertion in the query string** (`redirect_server` → `login_server.URL`),
-  not a 307 replaying the POST, so the assertion survives in the address bar for the paste fallback. HTTPS pages
-  cannot `fetch`/iframe `http://127.0.0.1` (mixed content), so a top-level redirect is the only option. Clients
-  before 0.9.0 have no `do_GET` and break against a newer redirect server.
+- **The redirect server returns a page, not a redirect.** It carries the assertion twice: in a link to
+  `login_server.URL?SAMLResponse=...` that a script tries to follow, and in a textarea to copy. Both are needed:
+  HTTPS pages cannot `fetch`/iframe `http://127.0.0.1` (mixed content), and browsers increasingly block
+  *navigation* from a public page to a private address, which is what a plain 307/303 relied on. The body is the
+  only channel no policy strips. Clients before 0.9.0 have no `do_GET` and break against a newer redirect server.
 - **With `ask_role` false the role must be unambiguous**: `resolve_role` errors listing the available roles
   rather than falling through to the interactive picker, which can never work under `--credential-process`.
 - Both `arn:aws:iam:` and `arn:aws-us-gov:iam:` ARNs are accepted in role parsing and validation — keep both
