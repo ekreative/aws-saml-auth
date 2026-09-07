@@ -42,8 +42,10 @@ The flow, orchestrated by `cli()` → `resolve_config()` → `process_auth()` in
    `~/.aws/credentials` (both written under `filelock`). Settings persist into the AWS config file under
    `asa.`-prefixed keys (`asa.login_url`, `asa.role_arn`, `asa.duration`, `asa.ask_role`), so a second run of the
    same profile needs no arguments.
-2. **`saml.Saml`** opens `login_url` in the browser and blocks on `login_server.LoginServer` (a one-shot
-   `HTTPServer` on **hardcoded port 4589**) to catch the POSTed `SAMLResponse`.
+2. **`saml.Saml`** prints and opens `login_url`, then waits for the assertion on two paths at once, whichever
+   arrives first: `login_server.LoginServer` (an `HTTPServer` on **port 4589**, `login_server.PORT`) and, when
+   interactive, a paste prompt. Both feed one `queue.Queue`; the server thread keeps serving until the main
+   thread has an assertion, so stray requests (favicon, prefetch, the user opening the url) cannot end the wait.
 3. **`amazon.Amazon`** parses role/principal pairs out of the SAML XML with lxml, calls
    `sts:AssumeRoleWithSAML`, and renders output (`--print-creds`, `--credential-process`, or profile write).
 4. **`util.Util`** holds the interactive role picker, `coalesce`, and POST parsing.
@@ -66,10 +68,21 @@ The flow, orchestrated by `cli()` → `resolve_config()` → `process_auth()` in
   allowed maximum out of the error message and retries once.
 - **Two servers, two roles.** `login_server` runs locally to receive the assertion. `redirect_server`
   (`--redirect-server`, `$PORT`) is meant to be deployed publicly (e.g. Cloud Run) as the SAML `ACS URL` and
-  307-redirects the POST to `http://127.0.0.1:4589/`; that deployment also requires `SAML:aud` on the IAM role's
+  redirects the POST to the login server; that deployment also requires `SAML:aud` on the IAM role's
   trust policy to include the redirect server's URL.
 - `Util.parse_post` only accepts `application/x-www-form-urlencoded`, which is what the SAML HTTP-POST binding
-  sends; anything else yields an empty dict.
+  sends; anything else yields an empty dict. It and `parse_query` return flat dicts, not `parse_qs` lists.
+- **Only the credentials document goes to stdout.** Prompts, the role table, errors and progress all go to
+  stderr via `Util.echo`/`Util.get_input`, because `--credential-process` output is parsed as JSON.
+- **`cli()` must exit non-zero on failure.** botocore only surfaces a credential process's stderr when it exits
+  non-zero; on exit 0 it parses stdout and reports `Expecting value: line 1 column 1 (char 0)` instead of the
+  real error.
+- **The redirect server 303s with the assertion in the query string** (`redirect_server` → `login_server.URL`),
+  not a 307 replaying the POST, so the assertion survives in the address bar for the paste fallback. HTTPS pages
+  cannot `fetch`/iframe `http://127.0.0.1` (mixed content), so a top-level redirect is the only option. Clients
+  before 0.9.0 have no `do_GET` and break against a newer redirect server.
+- **With `ask_role` false the role must be unambiguous**: `resolve_role` errors listing the available roles
+  rather than falling through to the interactive picker, which can never work under `--credential-process`.
 - Both `arn:aws:iam:` and `arn:aws-us-gov:iam:` ARNs are accepted in role parsing and validation — keep both
   branches in sync.
 

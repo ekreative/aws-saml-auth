@@ -1,6 +1,7 @@
 import os
+import sys
 from collections import OrderedDict
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlparse
 
 from tabulate import tabulate
 
@@ -10,7 +11,12 @@ FORM_URLENCODED = "application/x-www-form-urlencoded"
 class Util:
     @staticmethod
     def get_input(prompt):
-        return input(prompt)
+        print(prompt, end="", file=sys.stderr, flush=True)
+        return input()
+
+    @staticmethod
+    def echo(*args):
+        print(*args, file=sys.stderr, flush=True)
 
     @staticmethod
     def pick_a_role(roles, aliases=None, account=None):
@@ -44,7 +50,7 @@ class Util:
                 enriched_roles_tab.append([i + 1, role_property[0], role_property[1]])
 
             while True:
-                print(
+                Util.echo(
                     tabulate(
                         enriched_roles_tab,
                         headers=["No", "AWS account", "Role"],
@@ -56,11 +62,11 @@ class Util:
                 try:
                     return list(ordered_roles.items())[int(choice) - 1]
                 except (IndexError, ValueError):
-                    print("Invalid choice, try again.")
+                    Util.echo("Invalid choice, try again.")
         else:
             while True:
                 for i, role in enumerate(filtered_roles):
-                    print(f"[{i + 1:>3d}] {role}")
+                    Util.echo(f"[{i + 1:>3d}] {role}")
 
                 prompt = f"Type the number (1 - {len(filtered_roles):d}) of the role to assume: "
                 choice = Util.get_input(prompt)
@@ -68,7 +74,7 @@ class Util:
                 try:
                     return list(filtered_roles.items())[int(choice) - 1]
                 except (IndexError, ValueError):
-                    print("Invalid choice, try again.")
+                    Util.echo("Invalid choice, try again.")
 
     @staticmethod
     def touch(file_name, mode=0o600):
@@ -89,6 +95,10 @@ class Util:
                 return value
         return None
 
+    @staticmethod
+    def parse_query(path):
+        return Util.first_values(parse_qs(urlparse(path).query, keep_blank_values=True))
+
     # The SAML HTTP-POST binding always submits a form encoded body, anything
     # else is not a SAML response and is ignored.
     @staticmethod
@@ -97,6 +107,20 @@ class Util:
         if content_type.split(";")[0].strip().lower() != FORM_URLENCODED:
             return {}
         length = int(handler.headers.get("content-length", 0))
-        return parse_qs(
-            handler.rfile.read(length).decode("utf-8"), keep_blank_values=True
-        )
+        body = handler.rfile.read(length).decode("utf-8")
+        return Util.first_values(parse_qs(body, keep_blank_values=True))
+
+    @staticmethod
+    def first_values(parsed):
+        return {key: values[0] for key, values in parsed.items() if values}
+
+    # Accepts either the whole url copied out of the browser or just the
+    # assertion, so it does not matter which one the user pastes.
+    @staticmethod
+    def extract_saml_response(text):
+        text = text.strip()
+        if not text:
+            return None
+        if urlparse(text).scheme in ("http", "https"):
+            return Util.parse_query(text).get("SAMLResponse")
+        return text

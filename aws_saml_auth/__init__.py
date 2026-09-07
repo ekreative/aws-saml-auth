@@ -129,15 +129,19 @@ def cli(cli_args):
 
         process_auth(args, config)
     except amazon.ExpectedAmazonException as ex:
-        print(ex)
+        util.Util.echo(ex)
         sys.exit(1)
     except saml.ExpectedSamlException as ex:
-        print(ex)
+        util.Util.echo(ex)
         sys.exit(1)
     except KeyboardInterrupt:
-        pass
+        sys.exit(130)
     except Exception:
+        # Exiting non zero matters: the aws cli only shows what was written to
+        # stderr when the credential process fails, otherwise it just reports
+        # that it could not parse the empty stdout.
         logger.exception("Unexpected error")
+        sys.exit(1)
 
 
 def resolve_config(args):
@@ -226,6 +230,23 @@ def resolve_config(args):
     return config
 
 
+# The role cannot be asked for, so either it is unambiguous or this is an error
+# worth reporting rather than a prompt nobody will ever see.
+def resolve_role(config, roles):
+    available = "\n".join(f"  {role}" for role in sorted(roles))
+    if config.role_arn is not None:
+        raise amazon.ExpectedAmazonException(
+            f"Role {config.role_arn} is not available from this login, "
+            f"these are:\n{available}"
+        )
+    if len(roles) == 1:
+        return next(iter(roles.items()))
+    raise amazon.ExpectedAmazonException(
+        f"Set the role to assume with --role-arn or asa.role_arn, "
+        f"this login offers:\n{available}"
+    )
+
+
 def process_auth(args, config):
     if config.region is None:
         config.region = util.Util.get_input("AWS Region: ")
@@ -266,6 +287,8 @@ def process_auth(args, config):
         # Determine the provider and the role arn (if the the user provided isn't an option)
         if config.role_arn in roles and not config.ask_role:
             config.provider = roles[config.role_arn]
+        elif not config.ask_role:
+            config.role_arn, config.provider = resolve_role(config, roles)
         else:
             if config.account and config.resolve_aliases:
                 aliases = amazon_client.resolve_aws_aliases(roles)
@@ -282,8 +305,8 @@ def process_auth(args, config):
             else:
                 config.role_arn, config.provider = util.Util.pick_a_role(roles)
         if not config.quiet:
-            print("Assuming " + config.role_arn)
-            print(
+            util.Util.echo("Assuming " + config.role_arn)
+            util.Util.echo(
                 "Credentials Expiration: "
                 + format(amazon_client.expiration.astimezone(get_localzone()))
             )

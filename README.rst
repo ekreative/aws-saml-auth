@@ -140,6 +140,35 @@ If you have more than one role available to you (and you haven't set up ASA_ROLE
 you'll be prompted to choose the role from a list.
 
 
+Logging in without a browser
+----------------------------
+
+Inside a container, or over ssh, there is no browser to open and the browser
+you do have may not be able to reach ``127.0.0.1:4589`` where the command is
+listening. ``aws-saml-auth`` always prints the login url, so open it yourself,
+and it waits for the assertion on two paths at once:
+
+* the browser reaching the login server, as usual
+* you pasting it, when the browser cannot
+
+After logging in your browser ends up on
+``http://127.0.0.1:4589/?SAMLResponse=...``. If that page fails to load, copy
+the whole url out of the address bar and paste it at the prompt. Pasting just
+the ``SAMLResponse`` value works too.
+
+Publishing the port (``docker run -p 4589:4589 ...``) lets the browser reach
+the container directly, and then nothing needs pasting.
+
+The paste prompt needs a terminal, so it is not offered under
+``--credential-process``, where the aws cli captures both stdout and stderr and
+you would never see it. Log in once directly instead, and the aws cli will use
+the cached token afterwards:
+
+.. code:: shell
+
+    aws-saml-auth --credential-process -p my_profile >/dev/null
+
+
 Storage of profile credentials
 ------------------------------
 
@@ -188,6 +217,11 @@ Beware for google cloud run you must copy the docker image to your account:
     docker push gcr.io/my-project/aws-saml-auth
 
 Then change your SAML provider settings so the ``ACS URL`` points to the redirect server.
+
+The redirect server answers the ``ACS URL`` post with a 303 to
+``http://127.0.0.1:4589/?SAMLResponse=...``, so the assertion stays visible in
+the address bar for the paste fallback above. Clients older than 0.9.0 only
+accept the assertion as a post, so upgrade them alongside the redirect server.
 
 You will also need to change the Trust Relationship of your IAM Role to allow ``SAML:aud``
 to be the host of your redirect server.

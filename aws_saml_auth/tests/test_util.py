@@ -49,7 +49,7 @@ class TestParsePost(unittest.TestCase):
     def test_saml_response(self):
         self.assertEqual(
             util.Util.parse_post(self.handler(b"SAMLResponse=abc123&RelayState=")),
-            {"SAMLResponse": ["abc123"], "RelayState": [""]},
+            {"SAMLResponse": "abc123", "RelayState": ""},
         )
 
     def test_content_type_with_charset(self):
@@ -60,7 +60,7 @@ class TestParsePost(unittest.TestCase):
                     content_type="Application/X-WWW-Form-Urlencoded; charset=UTF-8",
                 )
             ),
-            {"SAMLResponse": ["abc123"]},
+            {"SAMLResponse": "abc123"},
         )
 
     def test_ignores_other_content_types(self):
@@ -69,3 +69,35 @@ class TestParsePost(unittest.TestCase):
             {},
         )
         self.assertEqual(util.Util.parse_post(self.handler(b"", content_type=None)), {})
+
+
+class TestExtractSamlResponse(unittest.TestCase):
+    def test_bare_assertion(self):
+        self.assertEqual(util.Util.extract_saml_response("PHNhbWw+"), "PHNhbWw+")
+        self.assertEqual(util.Util.extract_saml_response("  PHNhbWw+  "), "PHNhbWw+")
+
+    def test_url_copied_from_the_browser(self):
+        self.assertEqual(
+            util.Util.extract_saml_response(
+                "http://127.0.0.1:4589/?SAMLResponse=PHNhbWw%2Bfoo%3D"
+            ),
+            "PHNhbWw+foo=",
+        )
+
+    def test_url_without_an_assertion(self):
+        self.assertIsNone(util.Util.extract_saml_response("http://127.0.0.1:4589/"))
+
+    def test_nothing_pasted(self):
+        self.assertIsNone(util.Util.extract_saml_response(""))
+        self.assertIsNone(util.Util.extract_saml_response("   "))
+
+
+class TestParseQuery(unittest.TestCase):
+    def test_parses_request_path(self):
+        self.assertEqual(
+            util.Util.parse_query("/?SAMLResponse=abc&RelayState="),
+            {"SAMLResponse": "abc", "RelayState": ""},
+        )
+
+    def test_no_query(self):
+        self.assertEqual(util.Util.parse_query("/"), {})
