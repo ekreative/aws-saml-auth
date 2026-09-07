@@ -1,9 +1,16 @@
+import base64
+import binascii
 import os
 import sys
 from collections import OrderedDict
 from urllib.parse import parse_qs, urlparse
 
 from tabulate import tabulate
+
+try:
+    import termios
+except ImportError:  # not a posix terminal
+    termios = None
 
 FORM_URLENCODED = "application/x-www-form-urlencoded"
 
@@ -12,7 +19,52 @@ class Util:
     @staticmethod
     def get_input(prompt):
         print(prompt, end="", file=sys.stderr, flush=True)
-        return input()
+        return Util.read_line()
+
+    # A terminal in canonical mode delivers at most MAX_CANON (4096) bytes per
+    # line, which silently cuts off a pasted assertion. Turning canonical mode
+    # off for the read lifts that limit.
+    @staticmethod
+    def read_line():
+        if termios is None or not sys.stdin.isatty():
+            return sys.stdin.readline()
+
+        fd = sys.stdin.fileno()
+        saved = termios.tcgetattr(fd)
+        mode = termios.tcgetattr(fd)
+        mode[3] &= ~termios.ICANON
+        mode[6][termios.VMIN] = 1
+        mode[6][termios.VTIME] = 0
+        try:
+            termios.tcsetattr(fd, termios.TCSANOW, mode)
+            chars = bytearray()
+            while True:
+                char = os.read(fd, 1)
+                if char in (b"", b"\r", b"\n"):
+                    break
+                if char == b"\x03":
+                    raise KeyboardInterrupt
+                if char == b"\x7f":
+                    if chars:
+                        del chars[-1]
+                    continue
+                chars += char
+            return chars.decode("utf-8", "replace")
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, saved)
+
+    # Saved and restored by whoever owns the terminal, so an assertion arriving
+    # on the other path cannot leave it in a strange mode
+    @staticmethod
+    def tty_attributes():
+        if termios is None or not sys.stdin.isatty():
+            return None
+        return termios.tcgetattr(sys.stdin.fileno())
+
+    @staticmethod
+    def restore_tty(saved):
+        if saved is not None:
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, saved)
 
     @staticmethod
     def echo(*args):
@@ -114,8 +166,19 @@ class Util:
     def first_values(parsed):
         return {key: values[0] for key, values in parsed.items() if values}
 
-    # Accepts either the whole url copied out of the browser or just the
-    # assertion, so it does not matter which one the user pastes.
+    # Accepts the whole url copied out of the browser or just the assertion,
+    # and fails loudly on a value the terminal cut short rather than letting a
+    # base64 error surface from somewhere far away.
+    @staticmethod
+    def decode_assertion(text):
+        assertion = Util.extract_saml_response(text)
+        if assertion is None:
+            raise ValueError("No SAMLResponse in that")
+        try:
+            return base64.b64decode(assertion, validate=True)
+        except (binascii.Error, ValueError) as ex:
+            raise ValueError(f"That is not a whole assertion ({ex})") from None
+
     @staticmethod
     def extract_saml_response(text):
         text = text.strip()

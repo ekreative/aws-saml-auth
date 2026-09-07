@@ -27,7 +27,7 @@ If nothing happens your browser cannot reach the command. Copy the text below
 and paste it at the prompt in your terminal.
 </p>
 <textarea readonly rows="10" cols="80" onclick="this.select()">{assertion}</textarea>
-<script>location.replace(document.getElementById("continue").href)</script>
+<script>location.href = document.getElementById("continue").href</script>
 </body>
 </html>
 """

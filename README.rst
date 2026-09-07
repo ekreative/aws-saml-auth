@@ -161,6 +161,16 @@ Browsers increasingly refuse to navigate from a public https page to a private
 address like ``127.0.0.1``, so the copy and paste route is the reliable one
 whenever the command is not on the same machine as the browser.
 
+An assertion is several kilobytes and a terminal only hands over 4096 bytes of
+a line at a time, so the prompt reads it without that limit. If you would
+rather not paste at a prompt at all, pass the same value on the command line,
+where your shell has no such limit:
+
+.. code:: shell
+
+    aws-saml-auth -p my_profile --saml-assertion 'http://127.0.0.1:4589/?SAMLResponse=...'
+
+
 Publishing the port (``docker run -p 4589:4589 ...``) lets the browser reach
 the container directly, and then nothing needs pasting.
 

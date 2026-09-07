@@ -82,6 +82,10 @@ The flow, orchestrated by `cli()` → `resolve_config()` → `process_auth()` in
   HTTPS pages cannot `fetch`/iframe `http://127.0.0.1` (mixed content), and browsers increasingly block
   *navigation* from a public page to a private address, which is what a plain 307/303 relied on. The body is the
   only channel no policy strips. Clients before 0.9.0 have no `do_GET` and break against a newer redirect server.
+- **A terminal truncates a pasted assertion.** Canonical mode delivers at most `MAX_CANON` (4096) bytes per
+  line, and assertions are bigger, so `Util.read_line` clears `ICANON` for the read. `_await_assertion` saves and
+  restores the terminal in the main thread, because the server path can finish while the prompt thread is still
+  in raw mode. `Util.decode_assertion` validates base64 so a short paste is a retry, not a traceback.
 - **With `ask_role` false the role must be unambiguous**: `resolve_role` errors listing the available roles
   rather than falling through to the interactive picker, which can never work under `--credential-process`.
 - Both `arn:aws:iam:` and `arn:aws-us-gov:iam:` ARNs are accepted in role parsing and validation — keep both

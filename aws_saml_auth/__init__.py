@@ -1,5 +1,4 @@
 import argparse
-import base64
 import logging
 import os
 import sys
@@ -60,7 +59,7 @@ def parse_args(args):
     parser.add_argument(
         "--saml-assertion",
         dest="saml_assertion",
-        help="Base64 encoded SAML assertion to use",
+        help="Base64 encoded SAML assertion, or the url the browser ended up on",
     )
     parser.add_argument(
         "--no-saml-cache",
@@ -262,7 +261,7 @@ def process_auth(args, config):
     # response). The user does not need to be prompted for a password if the
     # SAML cache is used.
     if args.saml_assertion:
-        saml_xml = base64.b64decode(args.saml_assertion)
+        saml_xml = util.Util.decode_assertion(args.saml_assertion)
     elif config.token_cache:
         saml_xml = None
     elif config.saml_cache:

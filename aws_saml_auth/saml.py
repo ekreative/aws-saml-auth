@@ -1,4 +1,3 @@
-import base64
 import logging
 import queue
 import sys
@@ -15,8 +14,8 @@ logger = logging.getLogger(__name__)
 UNATTENDED_TIMEOUT = 120
 
 PASTE_PROMPT = (
-    f"If your browser could not open {login_server.URL}, paste the url it\n"
-    "ended up on (or the SAMLResponse itself) and press enter: "
+    f"If your browser could not reach {login_server.URL}, paste the url it\n"
+    "ended up on (or the assertion from the login page) and press enter:\n"
 )
 
 
@@ -41,14 +40,14 @@ class Saml:
         if not webbrowser.open(self.login_url):
             logger.info("No browser to open, the url above has to be opened by hand")
 
-        return base64.b64decode(self._await_assertion())
+        return self._await_assertion()
 
     # Waits for the assertion on two paths at once: the browser posting or
     # redirecting to the local server, and the user pasting it. Either wins.
     def _await_assertion(self):
         assertions = queue.Queue()
         httpd = LoginServer(("", login_server.PORT), LoginServerHandler, assertions)
-        interactive = sys.stdin.isatty() and not self.config.credential_process
+        interactive = self.can_prompt()
 
         threading.Thread(target=self._serve, args=(httpd,), daemon=True).start()
         if interactive:
@@ -58,6 +57,9 @@ class Saml:
         else:
             logger.info("Not interactive, only waiting for the browser")
 
+        # The paste prompt takes the terminal out of canonical mode, so its
+        # state is restored here whichever path finishes first
+        saved_tty = util.Util.tty_attributes() if interactive else None
         try:
             assertion = assertions.get(
                 timeout=None if interactive else UNATTENDED_TIMEOUT
@@ -70,8 +72,16 @@ class Saml:
             ) from None
         finally:
             httpd.shutdown()
+            util.Util.restore_tty(saved_tty)
 
-        return assertion
+        return util.Util.decode_assertion(assertion)
+
+    # A prompt is only worth offering if it can be seen and answered. Run by
+    # hand that is the terminal, but when the aws cli runs this as a
+    # credential process it captures stderr, so the prompt would never appear.
+    @staticmethod
+    def can_prompt():
+        return sys.stdin.isatty() and sys.stderr.isatty()
 
     @staticmethod
     def _serve(httpd):
@@ -86,11 +96,13 @@ class Saml:
                 pasted = util.Util.get_input(PASTE_PROMPT)
             except EOFError:
                 return
-            assertion = util.Util.extract_saml_response(pasted)
-            if assertion is not None:
-                assertions.put(assertion)
-                return
-            util.Util.echo("No SAMLResponse found in that, try again.")
+            try:
+                util.Util.decode_assertion(pasted)
+            except ValueError as ex:
+                util.Util.echo(f"{ex}, try again.")
+                continue
+            assertions.put(pasted)
+            return
 
     @property
     def login_url(self):

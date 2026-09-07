@@ -1,3 +1,4 @@
+import base64
 import io
 import unittest
 from types import SimpleNamespace
@@ -101,3 +102,31 @@ class TestParseQuery(unittest.TestCase):
 
     def test_no_query(self):
         self.assertEqual(util.Util.parse_query("/"), {})
+
+
+class TestDecodeAssertion(unittest.TestCase):
+    def test_assertion(self):
+        self.assertEqual(util.Util.decode_assertion("PHNhbWw+"), b"<saml>")
+
+    def test_url(self):
+        self.assertEqual(
+            util.Util.decode_assertion(
+                "http://127.0.0.1:4589/?SAMLResponse=PHNhbWw%2B"
+            ),
+            b"<saml>",
+        )
+
+    def test_a_long_assertion_is_fine(self):
+        whole = base64.b64encode(b"<saml>" * 2000).decode()
+        self.assertEqual(util.Util.decode_assertion(whole), b"<saml>" * 2000)
+
+    def test_truncated(self):
+        whole = base64.b64encode(b"<saml>" * 800).decode()
+        with self.assertRaises(ValueError) as e:
+            util.Util.decode_assertion(whole[:4033])
+        self.assertIn("not a whole assertion", str(e.exception))
+
+    def test_nothing(self):
+        with self.assertRaises(ValueError) as e:
+            util.Util.decode_assertion("http://127.0.0.1:4589/")
+        self.assertIn("No SAMLResponse", str(e.exception))
